@@ -15,6 +15,19 @@ export class MusicService {
   ) {}
 
   async addMusic(dto: AddMusicDto) {
+    // check music exist
+    /**
+     *
+     */
+
+    // save tags in array
+    let tag;
+    if (!Array.isArray(dto.tags)) {
+      tag = dto.tags.split(',');
+    }
+    dto.tags = tag;
+
+    // add music to DB
     const music = await this.musicModel.create(
       dto,
     );

@@ -17,7 +17,7 @@ export class Music extends Document {
   album: string;
 
   @Prop({ required: true })
-  genre: MusicGenre[];
+  genre: MusicGenre;
 
   @Prop({
     type: [String],
