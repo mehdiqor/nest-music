@@ -7,16 +7,20 @@ import {
 } from 'class-validator';
 import { MusicGenre } from 'src/schemas/music.schema';
 
-export class AddMusicDto {
-  @IsString()
+export class UpdateMusicDto {
   @IsNotEmpty()
-  @ApiProperty()
-  name: string;
+  @ApiProperty({ required: false })
+  id: string;
 
   @IsString()
-  @IsNotEmpty()
-  @ApiProperty()
-  artist: string;
+  @IsOptional()
+  @ApiProperty({ required: false })
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false })
+  artist?: string;
 
   @IsString()
   @IsOptional()
@@ -24,11 +28,21 @@ export class AddMusicDto {
   album?: string;
 
   @IsEnum(MusicGenre)
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({
-    enum: MusicGenre,
+    enum: [
+      'ROCK',
+      'METAL',
+      'JAZZ',
+      'BLUES',
+      'COUNTRY',
+      'CLASSIC',
+      'ELECTRONIC',
+      'POP',
+      'RAP',
+    ],
   })
-  genre: MusicGenre;
+  genre?: MusicGenre;
 
   @IsString()
   @IsOptional()
