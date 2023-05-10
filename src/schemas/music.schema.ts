@@ -5,10 +5,8 @@ import {
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type MusicDocument = Music & Document;
-
 @Schema()
-export class Music {
+export class Music extends Document {
   @Prop({ required: true })
   name: string;
 
@@ -21,8 +19,15 @@ export class Music {
   @Prop({ required: true })
   genre: MusicGenre[];
 
-  @Prop({ type: [String], default: [], required: false })
+  @Prop({
+    type: [String],
+    default: [],
+    required: false,
+  })
   tags: string[];
+
+  @Prop({ required: false })
+  link: string;
 
   @Prop()
   length: string;

@@ -1,25 +1,29 @@
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import {
-  Music,
-  MusicDocument,
-} from 'src/schemas/music.schema';
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Music } from '../schemas/music.schema';
 import { AddMusicDto } from './dto';
 
 @Injectable()
 export class MusicService {
   constructor(
     @InjectModel(Music.name)
-    private musicModel: Model<MusicDocument>,
+    private musicModel: Model<Music>,
   ) {}
 
   async addMusic(dto: AddMusicDto) {
-    console.log('dto: ', dto);
-
     const music = await this.musicModel.create(
       dto,
     );
+
+    if (!music)
+      throw new InternalServerErrorException(
+        'not added!',
+      );
+
     return music;
   }
 }

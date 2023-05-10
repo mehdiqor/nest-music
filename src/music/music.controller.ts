@@ -1,4 +1,8 @@
-import { Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+} from '@nestjs/common';
 import { MusicService } from './music.service';
 import { AddMusicDto } from './dto';
 
@@ -9,8 +13,7 @@ export class MusicController {
   ) {}
 
   @Post()
-  addMusic(dto: AddMusicDto) {
-    console.log("dto: ", dto);
+  addMusic(@Body() dto: AddMusicDto) {
     return this.musicService.addMusic(dto);
   }
 }
