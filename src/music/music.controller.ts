@@ -1,10 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MusicService } from './music.service';
 import {
@@ -19,6 +23,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { MusicGenre } from 'src/schemas/music.schema';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Music')
 @Controller('music')
@@ -27,17 +32,19 @@ export class MusicController {
     private readonly musicService: MusicService,
   ) {}
 
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-    'application/json',
-  )
   @Post()
-  addMusic(@Body() dto: AddMusicDto) {
-    return this.musicService.addMusic(dto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('music'))
+  addMusic(
+    @Body() dto: AddMusicDto,
+    @UploadedFile()
+    file: Express.Multer.File,
+  ) {
+    return this.musicService.addMusic(dto, file);
   }
 
-  @ApiProperty()
   @Get('find/:id')
+  @ApiProperty()
   findById(@Query(':id') id: string) {
     return this.musicService.findById(id);
   }
@@ -53,16 +60,23 @@ export class MusicController {
     type: FindGenreDto,
     enum: MusicGenre,
   })
-  findByGenre(@Query('genre') genre: FindGenreDto) {
+  findByGenre(
+    @Query('genre') genre: FindGenreDto,
+  ) {
     return this.musicService.findByGenre(genre);
   }
 
+  @Patch('update')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
     'application/json',
   )
-  @Patch('update')
   updateMusic(@Body() dto: UpdateMusicDto) {
     return this.musicService.updateMusic(dto);
+  }
+
+  @Delete('remove/:id')
+  removeMusic(@Param('id') id: string) {
+    return this.musicService.removeMusic(id);
   }
 }

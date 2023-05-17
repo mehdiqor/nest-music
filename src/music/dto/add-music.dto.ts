@@ -43,4 +43,10 @@ export class AddMusicDto {
     example: ['250top', 'progressive'],
   })
   tags?: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+  })
+  music: Express.Multer.File;
 }

@@ -30,17 +30,7 @@ export class UpdateMusicDto {
   @IsEnum(MusicGenre)
   @IsOptional()
   @ApiProperty({
-    enum: [
-      'ROCK',
-      'METAL',
-      'JAZZ',
-      'BLUES',
-      'COUNTRY',
-      'CLASSIC',
-      'ELECTRONIC',
-      'POP',
-      'RAP',
-    ],
+    enum: MusicGenre,
   })
   genre?: MusicGenre;
 
