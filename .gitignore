@@ -3,8 +3,6 @@
 /node_modules
 /data
 /uploads
-*/uploads
-*/musics
 *.txt
 
 # Logs
