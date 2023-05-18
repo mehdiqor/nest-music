@@ -50,3 +50,9 @@ export enum MusicGenre {
 
 export const MusicSchema =
   SchemaFactory.createForClass(Music);
+
+MusicSchema.index({
+  name: 'text',
+  artist: 'text',
+  album: 'text',
+});

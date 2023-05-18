@@ -66,6 +66,15 @@ export class MusicController {
     return this.musicService.findByGenre(genre);
   }
 
+  @ApiQuery({
+    name: 'search',
+    type: String,
+  })
+  @Get('search')
+  searchInMusic(@Query('search') query: string) {
+    return this.musicService.searchInMusic(query);
+  }
+
   @Patch('update')
   @ApiConsumes(
     'application/x-www-form-urlencoded',

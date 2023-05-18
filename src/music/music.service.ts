@@ -92,12 +92,21 @@ export class MusicService {
     return music;
   }
 
-  async query() {}
+  async searchInMusic(query: string) {
+    const music = await this.musicModel
+      .find({
+        $text: {
+          $search: query,
+        },
+      })
+
+    return music;
+  }
 
   async updateMusic(dto: UpdateMusicDto) {
     // save tags in array
     if (dto.tags) {
-      let tag;
+      let tag: any;
       if (!Array.isArray(dto.tags)) {
         tag = dto.tags.split(',');
       }

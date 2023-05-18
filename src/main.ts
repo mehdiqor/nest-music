@@ -36,7 +36,7 @@ async function bootstrap() {
   );
   SwaggerModule.setup('swagger', app, document);
 
-  const port = 3010;
+  const port = 3020;
   await app.listen(port);
 
   const logger = new Logger();
