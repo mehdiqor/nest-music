@@ -8,6 +8,10 @@ import {
   DocumentBuilder,
   SwaggerModule,
 } from '@nestjs/swagger';
+import {
+  HttpErrorFilter,
+  NotFoundHttpFilter,
+} from './common/filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,7 +28,13 @@ async function bootstrap() {
     }),
   );
 
-  // swagger
+  // Error handling
+  app.useGlobalFilters(
+    new NotFoundHttpFilter(),
+  );
+  app.useGlobalFilters(new HttpErrorFilter());
+
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('Music and Movie')
     .setVersion('1.0')
@@ -39,6 +49,7 @@ async function bootstrap() {
   const port = 3020;
   await app.listen(port);
 
+  // Logger
   const logger = new Logger();
   logger.log(
     `Application runnig -> http://localhost:${port}`,

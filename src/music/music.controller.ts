@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { MusicService } from './music.service';
@@ -24,15 +25,17 @@ import {
 } from '@nestjs/swagger';
 import { MusicGenre } from 'src/schemas/music.schema';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { HttpErrorFilter } from 'src/common/filters';
 
 @ApiTags('Music')
 @Controller('music')
+@UseFilters(HttpErrorFilter)
 export class MusicController {
   constructor(
     private readonly musicService: MusicService,
   ) {}
 
-  @Post()
+  @Post('add')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('music'))
   addMusic(
@@ -49,7 +52,7 @@ export class MusicController {
     return this.musicService.findById(id);
   }
 
-  @Get()
+  @Get('findall')
   getAllMusics() {
     return this.musicService.getAllMusics();
   }
@@ -66,11 +69,11 @@ export class MusicController {
     return this.musicService.findByGenre(genre);
   }
 
+  @Get('search')
   @ApiQuery({
     name: 'search',
     type: String,
   })
-  @Get('search')
   searchInMusic(@Query('search') query: string) {
     return this.musicService.searchInMusic(query);
   }
