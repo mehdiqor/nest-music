@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   UploadedFile,
-  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { MusicService } from './music.service';
@@ -25,11 +24,10 @@ import {
 } from '@nestjs/swagger';
 import { MusicGenre } from 'src/schemas/music.schema';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { HttpErrorFilter } from 'src/common/filters';
 
 @ApiTags('Music')
 @Controller('music')
-@UseFilters(HttpErrorFilter)
+// @UseFilters(HttpErrorFilter)
 export class MusicController {
   constructor(
     private readonly musicService: MusicService,

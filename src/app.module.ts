@@ -11,7 +11,12 @@ import { join } from 'path';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads', 'musics'),
+      rootPath: join(
+        __dirname,
+        '..',
+        'uploads',
+        'musics',
+      ),
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

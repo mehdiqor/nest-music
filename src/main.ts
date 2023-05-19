@@ -8,13 +8,15 @@ import {
   DocumentBuilder,
   SwaggerModule,
 } from '@nestjs/swagger';
-import {
-  HttpErrorFilter,
-  NotFoundHttpFilter,
-} from './common/filters';
+import { HttpExeptionFilter } from './http-exeption/http-exeption.filter';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app =
+    await NestFactory.create<NestExpressApplication>(
+      AppModule,
+    );
 
   app.enableCors({
     credentials: true,
@@ -29,10 +31,16 @@ async function bootstrap() {
   );
 
   // Error handling
-  app.useGlobalFilters(
-    new NotFoundHttpFilter(),
+  app.useGlobalFilters(new HttpExeptionFilter());
+
+  // Handlerbar template engine
+  app.useStaticAssets(
+    join(__dirname, '..', 'src', 'public'),
   );
-  app.useGlobalFilters(new HttpErrorFilter());
+  app.setBaseViewsDir(
+    join(__dirname, '..', 'src', 'public'),
+  );
+  app.setViewEngine('hbs');
 
   // Swagger
   const config = new DocumentBuilder()
