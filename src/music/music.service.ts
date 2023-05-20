@@ -92,15 +92,8 @@ export class MusicService {
     return music;
   }
 
-  async searchInMusic(query: string) {
-    const music = await this.musicModel
-      .find({
-        $text: {
-          $search: query,
-        },
-      })
-
-    return music;
+  async searchInMusic(query: string): Promise<any> {
+    // const body = await this.elasticsearch.save()
   }
 
   async updateMusic(dto: UpdateMusicDto) {

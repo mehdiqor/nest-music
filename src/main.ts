@@ -8,9 +8,9 @@ import {
   DocumentBuilder,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { HttpExeptionFilter } from './http-exeption/http-exeption.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { HttpExeptionFilter } from './http-exeption';
 
 async function bootstrap() {
   const app =
