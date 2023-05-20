@@ -2,6 +2,7 @@ import { Model } from 'mongoose';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -14,13 +15,25 @@ import {
   UpdateMusicDto,
 } from './dto';
 import getAudioDurationInSeconds from 'get-audio-duration';
+import { Client } from '@elastic/elasticsearch';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MusicService {
   constructor(
     @InjectModel(Music.name)
     private musicModel: Model<Music>,
+    @Inject('ELASTICSEARCH_CLIENT')
+    private esClient: Client,
+    private config: ConfigService,
   ) {}
+
+  async createIndex() {
+    const index =
+      await this.esClient.indices.create({
+        index: 'musics',
+      });
+  }
 
   async addMusic(
     dto: AddMusicDto,
@@ -48,7 +61,9 @@ export class MusicService {
       await getAudioDurationInSeconds(file.path);
     const time = this.getTime(seconds);
 
-    const musicPath = `http://localhost:3010/${file.filename}`;
+    const host = this.config.get('HOST');
+    const port = this.config.get('PORT');
+    const musicPath = `${host}:${port}/${file.filename}`;
 
     // add music to DB
     const music = await this.musicModel.create({
@@ -61,6 +76,24 @@ export class MusicService {
       throw new InternalServerErrorException(
         'proccess not be successful',
       );
+
+    // add to elasticsearch
+    const elastic = await this.esClient.index({
+      index: 'musics',
+      id: music._id,
+      body: {
+        name: music.name,
+        artist: music.artist,
+        album: music.album,
+        genre: music.genre,
+        tags: music.tags,
+        link: music.link,
+        length: music.length,
+        filePath: music.filePath,
+      },
+    });
+
+    if (!elastic) console.log('elastic error');
 
     return music;
   }
@@ -92,8 +125,46 @@ export class MusicService {
     return music;
   }
 
-  async searchInMusic(query: string): Promise<any> {
-    // const body = await this.elasticsearch.save()
+  async findWithElastic(search: string) {
+    const body = await this.esClient.search({
+      index: 'musics',
+      body: {
+        query: {
+          bool: {
+            should: [
+              {
+                match: {
+                  name: search,
+                },
+              },
+              {
+                match: {
+                  artist: search,
+                },
+              },
+              {
+                match: {
+                  album: search,
+                },
+              },
+              {
+                match: {
+                  genre: search,
+                },
+              },
+              {
+                match: {
+                  tags: search,
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const result = body.hits.hits;
+    return result;
   }
 
   async updateMusic(dto: UpdateMusicDto) {
@@ -106,7 +177,7 @@ export class MusicService {
       dto.tags = tag;
     }
 
-    // add music to DB
+    // update music in DB
     const music = await this.musicModel.updateOne(
       { _id: dto.id },
       {
@@ -119,8 +190,21 @@ export class MusicService {
         'proccess not be successful',
       );
 
+    // update in elasticsearch
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: dto.id,
+      body: {
+        doc: {
+          ...dto,
+        },
+      },
+    });
+    if (!elastic) console.log('elastic error');
+
     return {
       msg: 'Music info updated successfully!',
+      elastic
     };
   }
 
@@ -130,6 +214,13 @@ export class MusicService {
 
     if (!deletedMusic)
       throw new BadRequestException();
+
+    // delete from elastic
+    const elastic = await this.esClient.delete({
+      index: 'music',
+      id,
+    });
+    if (!elastic) console.log('elastic error');
 
     return { msg: 'deleted successfully' };
   }

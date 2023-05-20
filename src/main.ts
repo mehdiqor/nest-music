@@ -11,6 +11,7 @@ import {
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { HttpExeptionFilter } from './http-exeption';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app =
@@ -54,13 +55,17 @@ async function bootstrap() {
   );
   SwaggerModule.setup('swagger', app, document);
 
-  const port = 3020;
+  // host and port
+  const configService = new ConfigService()
+  const host = configService.get('HOST')
+  const port = configService.get('PORT');
+
   await app.listen(port);
 
   // Logger
   const logger = new Logger();
   logger.log(
-    `Application runnig -> http://localhost:${port}`,
+    `Application runnig -> ${host}:${port}`,
   );
 }
 bootstrap();

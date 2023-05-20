@@ -10,12 +10,19 @@ import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName } from 'src/utils';
 import { join } from 'path';
+import { Client } from '@elastic/elasticsearch';
 
 @Module({
   imports: [
     MulterModule.registerAsync({
       useFactory: async () => ({
-        dest: join(__dirname, '..', '..', 'uploads', 'musics'),
+        dest: join(
+          __dirname,
+          '..',
+          '..',
+          'uploads',
+          'musics',
+        ),
         limits: { fileSize: 20000000 },
         fileFilter: (req, file, cb) => {
           if (
@@ -33,7 +40,13 @@ import { join } from 'path';
           cb(null, true);
         },
         storage: diskStorage({
-          destination: join(__dirname, '..', '..', 'uploads', 'musics'),
+          destination: join(
+            __dirname,
+            '..',
+            '..',
+            'uploads',
+            'musics',
+          ),
           filename: editFileName,
         }),
       }),
@@ -46,6 +59,17 @@ import { join } from 'path';
     ]),
   ],
   controllers: [MusicController],
-  providers: [MusicService],
+  providers: [
+    MusicService,
+    {
+      provide: 'ELASTICSEARCH_CLIENT',
+      useFactory: () => {
+        return new Client({
+          node: 'http://localhost:9200',
+        });
+      },
+    },
+  ],
+  exports: ['ELASTICSEARCH_CLIENT'],
 })
 export class MusicModule {}

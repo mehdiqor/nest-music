@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -24,12 +25,14 @@ import {
 } from '@nestjs/swagger';
 import { MusicGenre } from 'src/schemas/music.schema';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Client } from '@elastic/elasticsearch';
 
 @ApiTags('Music')
 @Controller('music')
-// @UseFilters(HttpErrorFilter)
 export class MusicController {
   constructor(
+    @Inject('ELASTICSEARCH_CLIENT')
+    private readonly esClient: Client,
     private readonly musicService: MusicService,
   ) {}
 
@@ -67,13 +70,13 @@ export class MusicController {
     return this.musicService.findByGenre(genre);
   }
 
-  @Get('search')
+  @Get('elasticsearch')
   @ApiQuery({
     name: 'search',
     type: String,
   })
-  searchInMusic(@Query('search') query: string) {
-    return this.musicService.searchInMusic(query);
+  findWithElastic(@Query('search') search: string) {
+    return this.musicService.findWithElastic(search);
   }
 
   @Patch('update')
