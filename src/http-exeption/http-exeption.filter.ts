@@ -25,7 +25,7 @@ export class HttpExeptionFilter
       case HttpStatus.CONFLICT:
         response.status(status).json({
           statusCode: status,
-          message: 'This file already exist!',
+          message: "It's already exist!",
         });
         break;
       case HttpStatus.BAD_REQUEST:
@@ -43,7 +43,7 @@ export class HttpExeptionFilter
       case HttpStatus.PAYLOAD_TOO_LARGE:
         response.status(status).json({
           statusCode: status,
-          message: 'File too large',
+          message: 'Payload too large',
         });
         break;
       default:

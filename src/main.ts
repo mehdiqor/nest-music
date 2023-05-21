@@ -32,7 +32,7 @@ async function bootstrap() {
   );
 
   // Error handling
-  app.useGlobalFilters(new HttpExeptionFilter());
+  // app.useGlobalFilters(new HttpExeptionFilter());
 
   // Handlerbar template engine
   app.useStaticAssets(

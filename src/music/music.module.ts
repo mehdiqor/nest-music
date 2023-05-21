@@ -10,7 +10,8 @@ import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName } from 'src/utils';
 import { join } from 'path';
-import { Client } from '@elastic/elasticsearch';
+import { ElasticService } from 'src/elastic/elastic.service';
+import { ElasticModule } from 'src/elastic/elastic.module';
 
 @Module({
   imports: [
@@ -57,19 +58,9 @@ import { Client } from '@elastic/elasticsearch';
         schema: MusicSchema,
       },
     ]),
+    ElasticModule,
   ],
   controllers: [MusicController],
-  providers: [
-    MusicService,
-    {
-      provide: 'ELASTICSEARCH_CLIENT',
-      useFactory: () => {
-        return new Client({
-          node: 'http://localhost:9200',
-        });
-      },
-    },
-  ],
-  exports: ['ELASTICSEARCH_CLIENT'],
+  providers: [MusicService, ElasticService],
 })
 export class MusicModule {}
