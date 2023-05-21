@@ -28,7 +28,7 @@ export class MusicService {
     private config: ConfigService,
   ) {}
 
-  async createIndex() {
+  async elasticIndex() {
     const index =
       await this.esClient.indices.create({
         index: 'musics',
@@ -44,10 +44,7 @@ export class MusicService {
       dto.name,
       dto.artist,
     );
-    if (musicExist)
-      throw new ConflictException(
-        'this music already exist!',
-      );
+    if (musicExist) throw new ConflictException();
 
     // save tags in array
     let tag: any;
@@ -73,9 +70,7 @@ export class MusicService {
     });
 
     if (!music)
-      throw new InternalServerErrorException(
-        'proccess not be successful',
-      );
+      throw new InternalServerErrorException();
 
     // add to elasticsearch
     const elastic = await this.esClient.index({
@@ -92,7 +87,6 @@ export class MusicService {
         filePath: music.filePath,
       },
     });
-
     if (!elastic) console.log('elastic error');
 
     return music;
@@ -120,7 +114,8 @@ export class MusicService {
       genre,
     });
 
-    if (!music) throw new NotFoundException();
+    if (music.length == 0)
+      throw new NotFoundException();
 
     return music;
   }
@@ -186,9 +181,7 @@ export class MusicService {
     );
 
     if (music.modifiedCount == 0)
-      throw new InternalServerErrorException(
-        'proccess not be successful',
-      );
+      throw new InternalServerErrorException();
 
     // update in elasticsearch
     const elastic = await this.esClient.update({
@@ -204,7 +197,6 @@ export class MusicService {
 
     return {
       msg: 'Music info updated successfully!',
-      elastic
     };
   }
 

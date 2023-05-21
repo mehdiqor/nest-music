@@ -3,6 +3,7 @@
 /node_modules
 /data
 /uploads
+/logstash
 *.txt
 
 # Logs
