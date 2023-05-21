@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Query,
@@ -28,14 +29,6 @@ export class ElasticController {
     return this.elasticService.createIndex(dto);
   }
 
-  @Post('remove')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
-  removeIndex(@Body() dto: IndexDto) {
-    return this.elasticService.removeIndex(dto);
-  }
-
   @Post('exist')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
@@ -57,5 +50,13 @@ export class ElasticController {
     return this.elasticService.elasticSearchInMusics(
       search,
     );
+  }
+
+  @Delete('remove')
+  @ApiConsumes(
+    'application/x-www-form-urlencoded',
+  )
+  removeIndex(@Body() dto: IndexDto) {
+    return this.elasticService.removeIndex(dto);
   }
 }
