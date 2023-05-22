@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import {
   Prop,
   Schema,
@@ -5,19 +6,11 @@ import {
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+const config = new ConfigService();
 @Schema()
-export class Music extends Document {
+export class Track extends Document {
   @Prop({ required: true })
   name: string;
-
-  @Prop({ required: true })
-  artist: string;
-
-  @Prop({ required: false })
-  album: string;
-
-  @Prop({ required: true })
-  genre: MusicGenre;
 
   @Prop({
     type: [String],
@@ -27,13 +20,41 @@ export class Music extends Document {
   tags: string[];
 
   @Prop({ required: false })
-  link: string;
+  youtube_link: string;
 
   @Prop()
   length: string;
 
   @Prop()
   filePath: string;
+}
+
+export const TrackSchema =
+  SchemaFactory.createForClass(Track);
+
+TrackSchema.index({
+  name: 'text',
+});
+
+TrackSchema.virtual('trackURL').get(function () {
+  return `${config.get(
+    'HOST',
+  )}:${config.get('PORT')}/${this.filePath}`;
+});
+
+@Schema()
+export class Album extends Document {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ required: false })
+  year: number;
+
+  @Prop({ required: true })
+  genre: MusicGenre;
+
+  @Prop({ type: [TrackSchema], default: [] })
+  tracks: [Track];
 }
 
 export enum MusicGenre {
@@ -48,11 +69,25 @@ export enum MusicGenre {
   RAP = 'RAP',
 }
 
-export const MusicSchema =
-  SchemaFactory.createForClass(Music);
+export const AlbumSchema =
+  SchemaFactory.createForClass(Album);
 
-MusicSchema.index({
+AlbumSchema.index({
   name: 'text',
-  artist: 'text',
-  album: 'text',
+});
+
+@Schema()
+export class Artist extends Document {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ type: [AlbumSchema], default: [] })
+  albums: [Album];
+}
+
+export const ArtistSchema =
+  SchemaFactory.createForClass(Artist);
+
+ArtistSchema.index({
+  name: 'text',
 });
