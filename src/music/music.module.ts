@@ -1,17 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  Music,
-  MusicSchema,
-} from 'src/schemas/music.schema';
-import { MusicService } from './music.service';
-import { MusicController } from './music.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { editFileName } from 'src/utils';
 import { join } from 'path';
 import { ElasticService } from 'src/elastic/elastic.service';
 import { ElasticModule } from 'src/elastic/elastic.module';
+import { ArtistModule } from './artist/artist.module';
+import { AlbumModule } from './album/album.module';
+import { TrackModule } from './track/track.module';
 
 @Module({
   imports: [
@@ -24,7 +19,7 @@ import { ElasticModule } from 'src/elastic/elastic.module';
           'uploads',
           'musics',
         ),
-        limits: { fileSize: 20000000 },
+        limits: { fileSize: 50000000 },
         fileFilter: (req, file, cb) => {
           if (
             !file.originalname.match(
@@ -48,19 +43,15 @@ import { ElasticModule } from 'src/elastic/elastic.module';
             'uploads',
             'musics',
           ),
-          filename: editFileName,
+          // filename: editFileName,
         }),
       }),
     }),
-    MongooseModule.forFeature([
-      {
-        name: Music.name,
-        schema: MusicSchema,
-      },
-    ]),
+    ArtistModule,
+    AlbumModule,
+    TrackModule,
     ElasticModule,
   ],
-  controllers: [MusicController],
-  providers: [MusicService, ElasticService],
+  providers: [ElasticService],
 })
 export class MusicModule {}

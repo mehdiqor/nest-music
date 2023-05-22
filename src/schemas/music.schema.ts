@@ -44,11 +44,11 @@ TrackSchema.virtual('trackURL').get(function () {
 
 @Schema()
 export class Album extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({ required: false })
-  year: number;
+  year: string;
 
   @Prop({ required: true })
   genre: MusicGenre;
@@ -78,7 +78,7 @@ AlbumSchema.index({
 
 @Schema()
 export class Artist extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({ type: [AlbumSchema], default: [] })
