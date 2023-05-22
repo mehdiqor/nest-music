@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Query,
+  Render,
 } from '@nestjs/common';
 import { ElasticService } from './elastic.service';
 import {
@@ -15,21 +16,21 @@ import {
 import { IndexDto } from './dto';
 
 @ApiTags('Elastic Search')
-@Controller('elasticsearch')
+@Controller('elastic')
 export class ElasticController {
   constructor(
     private readonly elasticService: ElasticService,
   ) {}
 
-  @Post('add')
+  @Post('add-index')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
   )
-  addMusic(@Body() dto: IndexDto) {
+  createIndex(@Body() dto: IndexDto) {
     return this.elasticService.createIndex(dto);
   }
 
-  @Post('exist')
+  @Post('exist-index')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
   )
@@ -43,6 +44,7 @@ export class ElasticController {
   @ApiQuery({
     name: 'search',
     type: String,
+    required: false,
   })
   elasticSearchInMusics(
     @Query('search') search: string,
@@ -52,7 +54,20 @@ export class ElasticController {
     );
   }
 
-  @Delete('remove')
+  @Get('search')
+  // @Render('search-engine/search')
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+  })
+  searchengine(@Query('search') search: string) {
+    return this.elasticService.searchengine(
+      search,
+    );
+  }
+
+  @Delete('remove-index')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
   )

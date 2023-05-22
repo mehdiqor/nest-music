@@ -65,7 +65,10 @@ export class MusicService {
 
     // add to elasticsearch
     const index = this.config.get('MUSIC_INDEX');
-    await this.elasticService.addToElastic(music, index);
+    await this.elasticService.addToElastic(
+      music,
+      index,
+    );
 
     return music;
   }
@@ -99,6 +102,11 @@ export class MusicService {
   }
 
   async updateMusic(dto: UpdateMusicDto) {
+    // delete empty data
+    Object.keys(dto).forEach((key) => {
+      if (!dto[key]) delete dto[key];
+    });
+
     // save tags in array
     if (dto.tags) {
       let tag: any;
@@ -121,7 +129,10 @@ export class MusicService {
 
     // update in elasticsearch
     const index = this.config.get('MUSIC_INDEX');
-    await this.elasticService.updateElastic(dto, index);
+    await this.elasticService.updateElastic(
+      dto,
+      index,
+    );
 
     return {
       msg: 'Music info updated successfully!',
@@ -145,7 +156,7 @@ export class MusicService {
     return { msg: 'deleted successfully' };
   }
 
-  async findMusic(name, artist) {
+  async findMusic(name: string, artist: string) {
     const music = await this.musicModel.findOne({
       name,
       artist,

@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { IndexDto } from './dto';
+import { UpdateMusicDto } from 'src/music/dto';
 
 @Injectable()
 export class ElasticService {
@@ -72,37 +73,35 @@ export class ElasticService {
   async elasticSearchInMusics(search: string) {
     const body = await this.esClient.search({
       index: 'musics',
-      body: {
-        query: {
-          bool: {
-            should: [
-              {
-                match: {
-                  name: search,
-                },
-              },
-              {
-                match: {
-                  artist: search,
-                },
-              },
-              {
-                match: {
-                  album: search,
-                },
-              },
-              {
-                match: {
-                  genre: search,
-                },
-              },
-              {
-                match: {
-                  tags: search,
-                },
-              },
-            ],
-          },
+      q: search,
+    });
+
+    const result = body.hits.hits;
+    return result;
+  }
+
+  async searchengine(search: string) {
+    const body = await this.esClient.search({
+      index: 'musics',
+      query: {
+        bool: {
+          should: [
+            {
+              regexp: { name: `.*${search}.*` },
+            },
+            {
+              regexp: { artist: `.*${search}.*` },
+            },
+            {
+              regexp: { album: `.*${search}.*` },
+            },
+            {
+              regexp: { genre: `.*${search}.*` },
+            },
+            {
+              regexp: { tags: `.*${search}.*` },
+            },
+          ],
         },
       },
     });
@@ -111,7 +110,10 @@ export class ElasticService {
     return result;
   }
 
-  async updateElastic(dto, index: string) {
+  async updateElastic(
+    dto: UpdateMusicDto,
+    index: string,
+  ) {
     const elastic = await this.esClient.update({
       index,
       id: dto.id,
@@ -125,12 +127,12 @@ export class ElasticService {
     if (!elastic) console.log('elastic error');
   }
 
-  async removeElastic(id, index: string) {
+  async removeElastic(id: string, index: string) {
     const elastic = await this.esClient.delete({
       index,
       id,
     });
-    console.log(elastic);
-    if (!elastic) console.log('elastic error');
+    if (elastic?._shards?.successful == 0)
+      console.log('not deleted from elastic');
   }
 }

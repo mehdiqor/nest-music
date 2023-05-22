@@ -20,7 +20,7 @@ export class HttpExeptionFilter
 
     switch (status) {
       case HttpStatus.NOT_FOUND:
-        response.render('404');
+        response.render('404/404');
         break;
       case HttpStatus.CONFLICT:
         response.status(status).json({
