@@ -9,7 +9,7 @@ export const editFileName = (
     file.originalname,
   );
   const name = path.join(
-    req.body.artist + '-' + req.body.name,
+    req.body.ArtistName + '-' + req.body.name,
   );
 
   const date = new Date();

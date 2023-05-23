@@ -156,6 +156,9 @@ export class AlbumService {
     if (removedAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    return { msg: 'album removed successfuly' };
+    return {
+      msg: 'album removed successfuly',
+      removed: removedAlbum.modifiedCount,
+    };
   }
 }

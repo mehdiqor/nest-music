@@ -6,7 +6,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { IndexDto } from './dto';
-import { UpdateMusicDto } from 'src/music/dto';
 
 @Injectable()
 export class ElasticService {
@@ -111,7 +110,7 @@ export class ElasticService {
   }
 
   async updateElastic(
-    dto: UpdateMusicDto,
+    dto,
     index: string,
   ) {
     const elastic = await this.esClient.update({

@@ -39,5 +39,5 @@ export class AddTrackDto {
     type: 'string',
     format: 'binary',
   })
-  music: Express.Multer.File;
+  track: Express.Multer.File;
 }
