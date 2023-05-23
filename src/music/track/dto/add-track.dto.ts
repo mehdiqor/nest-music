@@ -9,17 +9,17 @@ export class AddTrackDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  ArtistName: string;
+  artistName: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  AlbumName: string;
+  albumName: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  name: string;
+  trackName: string;
 
   @IsString({ each: true })
   @IsOptional()

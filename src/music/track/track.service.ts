@@ -30,14 +30,14 @@ export class TrackService {
     // check exist track
     const findAlbums =
       await this.artistModel.findOne({
-        name: dto.ArtistName,
+        artistName: dto.artistName,
       });
 
     const album = findAlbums.albums.find(
-      (t) => t.name == dto.AlbumName,
+      (t) => t.albumName == dto.albumName,
     );
     const findTrack = album.tracks.find(
-      (t) => t.name === dto.name,
+      (t) => t.trackName === dto.trackName,
     );
 
     if (findTrack)
@@ -64,7 +64,7 @@ export class TrackService {
 
     // add track to DB
     const data = {
-      name: dto.name,
+      name: dto.trackName,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
       fileName: file.filename,
@@ -75,8 +75,8 @@ export class TrackService {
     const track =
       await this.artistModel.updateOne(
         {
-          name: dto.ArtistName,
-          'albums.name': dto.AlbumName,
+          artistName: dto.artistName,
+          'albums.albumName': dto.albumName,
         },
         {
           $push: {
@@ -101,10 +101,10 @@ export class TrackService {
       });
 
     const album = findAlbums.albums.find(
-      (t) => t.name == albumName,
+      (t) => t.albumName == albumName,
     );
     const track = album.tracks.find(
-      (t) => t.name === trackName,
+      (t) => t.trackName === trackName,
     );
 
     if (!track) throw new NotFoundException();

@@ -11,19 +11,21 @@ import {
   AddArtistDto,
   UpdateArtistDto,
 } from './dto';
+import { ElasticService } from 'src/elastic/elastic.service';
 
 @Injectable()
 export class ArtistService {
   constructor(
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
+    private elasticService: ElasticService,
   ) {}
 
   async addArtist(dto: AddArtistDto) {
     // check exist artist
     const checkExistArtist =
       await this.artistModel.findOne({
-        name: dto.name,
+        artistName: dto.artistName,
       });
 
     if (checkExistArtist)
@@ -32,12 +34,15 @@ export class ArtistService {
       );
 
     // create artist and save in DB
-    const artist = await this.artistModel.create(
-      dto,
-    );
+    const artist = await this.artistModel.create({
+      artistName: dto.artistName,
+    });
 
     if (!artist)
       throw new InternalServerErrorException();
+
+    // add artist to elastic
+    await this.elasticService.addArtist(artist);
 
     return artist;
   }
@@ -58,11 +63,9 @@ export class ArtistService {
     return artist;
   }
 
-  async updateArtistByName(dto: UpdateArtistDto) {
+  async updateArtistById(id: string, dto: UpdateArtistDto) {
     // check exist artist
-    const { _id } = await this.findArtist(
-      dto.artistName,
-    );
+    await this.getArtistById(id);
 
     // delete empty data
     Object.keys(dto).forEach((key) => {
@@ -71,12 +74,18 @@ export class ArtistService {
 
     // update artist info
     const updatedArtist =
-      await this.artistModel.updateOne({_id}, {
-        name: dto.newName,
-      });
-      
+      await this.artistModel.updateOne(
+        { _id: id },
+        {
+          artistName: dto.artistName,
+        },
+      );
+
     if (updatedArtist.modifiedCount == 0)
       throw new InternalServerErrorException();
+
+    // update elastic
+    await this.elasticService.updateElastic(id, dto);
 
     return {
       msg: 'artist info updated successfully',
@@ -84,18 +93,23 @@ export class ArtistService {
     };
   }
 
-  async removeArtistByName(name: string) {
+  async removeArtistByName(artistName: string) {
     // check exist artist
-    await this.findArtist(name);
+    const { _id } = await this.findArtist(
+      artistName,
+    );
 
     // remove artist from DB
     const deletedArtist =
       await this.artistModel.deleteOne({
-        name,
+        artistName,
       });
 
     if (deletedArtist.deletedCount == 0)
       throw new InternalServerErrorException();
+
+    // remove from elastic
+    await this.elasticService.removeArtist(_id);
 
     return {
       msg: 'artist removed successfully',
@@ -103,9 +117,9 @@ export class ArtistService {
     };
   }
 
-  async findArtist(name: string) {
+  async findArtist(artistName: string) {
     const artist = await this.artistModel.findOne(
-      { name },
+      { artistName },
     );
 
     if (!artist) throw new NotFoundException();

@@ -8,5 +8,5 @@ export class AddArtistDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  name: string;
+  artistName: string;
 }

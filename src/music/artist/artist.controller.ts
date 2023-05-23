@@ -44,24 +44,26 @@ export class ArtistController {
     return this.artistService.getArtistById(id);
   }
 
-  @Patch('update')
+  @Patch('update/:id')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
   )
-  updateArtistByName(
+  updateArtistById(
+    @Param('id') id: string,
     @Body() dto: UpdateArtistDto,
   ) {
-    return this.artistService.updateArtistByName(
+    return this.artistService.updateArtistById(
+      id,
       dto,
     );
   }
 
-  @Delete('remove/:name')
+  @Delete('remove/:artistName')
   removeArtistByName(
-    @Param('name') name: string,
+    @Param('artistName') artistName: string,
   ) {
     return this.artistService.removeArtistByName(
-      name,
+      artistName,
     );
   }
 }

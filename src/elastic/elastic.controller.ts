@@ -5,7 +5,6 @@ import {
   Get,
   Post,
   Query,
-  Render,
 } from '@nestjs/common';
 import { ElasticService } from './elastic.service';
 import {
@@ -40,6 +39,14 @@ export class ElasticController {
     );
   }
 
+  @Delete('remove-index')
+  @ApiConsumes(
+    'application/x-www-form-urlencoded',
+  )
+  removeIndex(@Body() dto: IndexDto) {
+    return this.elasticService.removeIndex(dto);
+  }
+
   @Get('find')
   @ApiQuery({
     name: 'search',
@@ -67,11 +74,12 @@ export class ElasticController {
     );
   }
 
-  @Delete('remove-index')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
-  removeIndex(@Body() dto: IndexDto) {
-    return this.elasticService.removeIndex(dto);
+  @Delete('remove')
+  removeDirectlyFromElastic(
+    @Query('id') id: string,
+  ) {
+    return this.elasticService.removeDirectlyFromElastic(
+      id,
+    );
   }
 }

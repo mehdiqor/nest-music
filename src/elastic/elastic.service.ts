@@ -24,6 +24,16 @@ export class ElasticService {
       await this.esClient.indices.create({
         index: dto.indexName,
       });
+    console.log(index);
+
+    return index;
+  }
+
+  async checkExistIndex(dto: IndexDto) {
+    const index =
+      await this.esClient.indices.exists({
+        index: dto.indexName,
+      });
 
     return index;
   }
@@ -40,33 +50,50 @@ export class ElasticService {
     return { msg: 'Index removed' };
   }
 
-  async checkExistIndex(dto: IndexDto) {
-    const index =
-      await this.esClient.indices.exists({
-        index: dto.indexName,
-      });
-
-    return index;
-  }
-
-  async addToElastic(data, index: string) {
+  async addArtist(data) {
     const elastic = await this.esClient.index({
-      index,
+      index: 'musics',
       id: data._id,
       body: {
-        name: data.name,
-        artist: data.artist,
-        album: data.album,
-        genre: data.genre,
-        tags: data.tags,
-        link: data.link,
-        length: data.length,
-        filePath: data.filePath,
+        artistName: data.artistName,
+        albums: data.albums
       },
     });
 
-    console.log(elastic);
     if (!elastic) console.log('elastic error');
+  }
+
+  async updateElastic(id: string, data) {
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id,
+      body: {
+        doc: {
+          ...data,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      console.log('elastic error');
+  }
+
+  async removeArtist(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id,
+    });
+    if (elastic?._shards?.successful == 0)
+      console.log('not deleted from elastic');
+  }
+
+  async removeDirectlyFromElastic(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id,
+    });
+    if (elastic?._shards?.successful == 0)
+      console.log('not deleted from elastic');
   }
 
   async elasticSearchInMusics(search: string) {
@@ -78,6 +105,7 @@ export class ElasticService {
     const result = body.hits.hits;
     return result;
   }
+  // ta inja OKeee
 
   async searchengine(search: string) {
     const body = await this.esClient.search({
@@ -107,31 +135,5 @@ export class ElasticService {
 
     const result = body.hits.hits;
     return result;
-  }
-
-  async updateElastic(
-    dto,
-    index: string,
-  ) {
-    const elastic = await this.esClient.update({
-      index,
-      id: dto.id,
-      body: {
-        doc: {
-          ...dto,
-        },
-      },
-    });
-    console.log(elastic);
-    if (!elastic) console.log('elastic error');
-  }
-
-  async removeElastic(id: string, index: string) {
-    const elastic = await this.esClient.delete({
-      index,
-      id,
-    });
-    if (elastic?._shards?.successful == 0)
-      console.log('not deleted from elastic');
   }
 }
