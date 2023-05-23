@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +13,7 @@ import {
   UpdateTrackDto,
 } from './dto';
 import getAudioDurationInSeconds from 'get-audio-duration';
+import { deleteFileInPublic } from 'src/utils';
 
 @Injectable()
 export class TrackService {
@@ -25,6 +27,24 @@ export class TrackService {
     dto: AddTrackDto,
     file: Express.Multer.File,
   ) {
+    // check exist track
+    const findAlbums =
+      await this.artistModel.findOne({
+        name: dto.ArtistName,
+      });
+
+    const album = findAlbums.albums.find(
+      (t) => t.name == dto.AlbumName,
+    );
+    const findTrack = album.tracks.find(
+      (t) => t.name === dto.name,
+    );
+
+    if (findTrack)
+      throw new ConflictException(
+        'this track is already exist',
+      );
+
     // save tags in array
     let tag: any;
     if (!Array.isArray(dto.tags)) {
@@ -47,6 +67,7 @@ export class TrackService {
       name: dto.name,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
+      fileName: file.filename,
       filePath,
       length,
     };
@@ -128,20 +149,29 @@ export class TrackService {
     };
   }
 
-  async removeTrack(trackId: string) {
+  async removeTrack(
+    trackName: string,
+    albumName: string,
+  ) {
     // check exist track
-    // await this.findTrackById(trackId);
+    const { fileName } = await this.findTrack(
+      trackName,
+      albumName,
+    );
+
+    // delete track file
+    deleteFileInPublic(fileName);
 
     // remove track from DB
     const removedTrack =
       await this.artistModel.updateOne(
         {
-          'albums.tracks._id': trackId,
+          'albums.tracks.name': trackName,
         },
         {
           $pull: {
             'albums.$.tracks': {
-              _id: trackId,
+              name: trackName,
             },
           },
         },
@@ -151,7 +181,7 @@ export class TrackService {
       throw new InternalServerErrorException();
 
     return {
-      msg: 'album removed successfuly',
+      msg: 'track removed successfuly',
       removed: removedTrack.modifiedCount,
     };
   }

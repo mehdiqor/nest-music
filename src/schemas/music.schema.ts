@@ -9,7 +9,7 @@ import { Document } from 'mongoose';
 const config = new ConfigService();
 @Schema()
 export class Track extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({
@@ -24,6 +24,9 @@ export class Track extends Document {
 
   @Prop()
   length: string;
+
+  @Prop()
+  fileName: string;
 
   @Prop()
   filePath: string;

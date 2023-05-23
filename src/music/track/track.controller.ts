@@ -55,8 +55,14 @@ export class TrackController {
     return this.trackService.updateTrack(dto);
   }
 
-  @Patch('remove/:trackId')
-  removeTrack(@Param('trackId') trackId: string) {
-    return this.trackService.removeTrack(trackId);
+  @Patch('remove')
+  removeTrack(
+    @Query('trackName') trackName: string,
+    @Query('albumName') albumName: string,
+  ) {
+    return this.trackService.removeTrack(
+      trackName,
+      albumName,
+    );
   }
 }
