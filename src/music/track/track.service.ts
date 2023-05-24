@@ -132,22 +132,39 @@ export class TrackService {
     return track;
   }
 
+  // bug report
   async updateTrack(dto: UpdateTrackDto) {
+    // check exist track
+    const artist = await this.artistModel.findOne(
+      { 'albums.albumName': dto.albumName },
+    );
+
+    const album = artist.albums.find(
+      (t) => t.albumName == dto.albumName,
+    );
+    const track = album.tracks.find(
+      (t) => t.trackName === dto.trackName,
+    );
+
+    if (!track) throw new NotFoundException();
+
     // delete empty data
     Object.keys(dto).forEach((key) => {
       if (!dto[key]) delete dto[key];
     });
 
     // save tags in array
-    let tag: any;
-    if (!Array.isArray(dto.tags)) {
-      tag = dto.tags.split(',');
+    if (dto.tags) {
+      let tag: any;
+      if (!Array.isArray(dto.tags)) {
+        tag = dto.tags.split(',');
+      }
+      dto.tags = tag;
     }
-    dto.tags = tag;
 
     // update track info
     const data = {
-      trackName: dto.trackName,
+      trackName: dto.newTrackName,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
     };
@@ -155,7 +172,8 @@ export class TrackService {
     const updatedTrack =
       await this.artistModel.updateOne(
         {
-          'albums.tracks._id': dto.trackId,
+          'albums.tracks.trackName':
+            dto.trackName,
         },
         {
           $set: {
@@ -167,7 +185,7 @@ export class TrackService {
     if (updatedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // send data with event emitter to elasticsearch
+    // // send data with event emitter to elasticsearch
     const { _id, albums } =
       await this.artistModel.findOne(
         { 'albums.albumName': dto.albumName },
@@ -266,9 +284,9 @@ export class TrackService {
     if (String(hour).length == 1)
       hour = Number(`0${hour}`);
     if (String(minutes).length == 1)
-      minutes = `0${minutes}`;
+      minutes = String(`0${minutes}`);
     if (String(second).length == 1)
-      second = `0${second}`;
+      second = String(`0${second}`);
     return hour + ':' + minutes + ':' + second;
   }
 }

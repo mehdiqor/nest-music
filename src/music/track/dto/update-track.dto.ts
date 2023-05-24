@@ -9,19 +9,19 @@ export class UpdateTrackDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  trackId: string;
+  albumName: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  albumName: string;
+  trackName: string;
 
   @IsString()
   @IsOptional()
   @ApiProperty({
     required: false,
   })
-  trackName?: string;
+  newTrackName?: string;
 
   @IsString({ each: true })
   @IsOptional()
