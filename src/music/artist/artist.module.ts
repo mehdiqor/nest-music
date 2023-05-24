@@ -6,7 +6,6 @@ import {
   Artist,
   ArtistSchema,
 } from 'src/schemas/music.schema';
-import { ElasticModule } from 'src/elastic/elastic.module';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { ElasticModule } from 'src/elastic/elastic.module';
         schema: ArtistSchema,
       },
     ]),
-    ElasticModule
   ],
   controllers: [ArtistController],
   providers: [ArtistService],

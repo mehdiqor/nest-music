@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { IndexDto } from './dto';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ElasticService {
@@ -103,5 +104,88 @@ export class ElasticService {
       throw new InternalServerErrorException();
 
     return { msg: 'Index removed' };
+  }
+
+  @OnEvent('sync.artist')
+  async syncArtist(data) {
+    const elastic = await this.esClient.index({
+      index: 'musics',
+      id: data.id,
+      body: {
+        artistName: data.artistName,
+        albums: data.albums,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('add.artist')
+  async addArtist(data) {
+    const elastic = await this.esClient.index({
+      index: 'musics',
+      id: data._id,
+      body: {
+        artistName: data.artistName,
+        albums: data.albums,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('remove.artist')
+  async removeArtist(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id,
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('edit.artist')
+  async editArtist(data) {
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: data.id,
+      body: {
+        doc: {
+          artistName: data.artistName,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('update.model')
+  async updateModel(data) {
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: data.id,
+      body: {
+        doc: {
+          albums: data.albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
   }
 }

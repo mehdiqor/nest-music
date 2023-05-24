@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -15,7 +14,7 @@ import {
 } from './dto';
 import getAudioDurationInSeconds from 'get-audio-duration';
 import { deleteFileInPublic } from 'src/utils';
-import { Client } from '@elastic/elasticsearch';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class TrackService {
@@ -23,8 +22,7 @@ export class TrackService {
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
     private config: ConfigService,
-    @Inject('ELASTICSEARCH_CLIENT')
-    private esClient: Client,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async addTrack(
@@ -91,31 +89,24 @@ export class TrackService {
     if (track.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // add to elastic
+    // send data with event emitter to elasticsearch
     const { _id, albums } =
       await this.artistModel.findOne({
         artistName: dto.artistName,
       });
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
+    const elasticData = {
       id: _id,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      albums,
+    };
+    this.eventEmitter.emit(
+      'update.model',
+      elasticData,
+    );
 
     return {
       msg: 'created successfully',
-      mongoAdd: track.modifiedCount,
-      elasticAdd: elastic._shards.successful,
+      added: track.modifiedCount,
     };
   }
 
@@ -176,32 +167,25 @@ export class TrackService {
     if (updatedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // add to elastic
-    const { _id: artistId, albums } =
+    // send data with event emitter to elasticsearch
+    const { _id, albums } =
       await this.artistModel.findOne(
         { 'albums.albumName': dto.albumName },
         { 'albums.$': 1 },
       );
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
-      id: artistId,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+    const elasticData = {
+      id: _id,
+      albums,
+    };
+    this.eventEmitter.emit(
+      'update.model',
+      elasticData,
+    );
 
     return {
       msg: 'track info updated successfully',
-      mongoUpdated: updatedTrack.modifiedCount,
-      elasticUpdated: elastic._shards.successful,
+      updated: updatedTrack.modifiedCount,
     };
   }
 
@@ -227,7 +211,7 @@ export class TrackService {
         {
           $pull: {
             'albums.$.tracks': {
-              trackName
+              trackName,
             },
           },
         },
@@ -236,32 +220,25 @@ export class TrackService {
     if (removedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // add to elastic
-    const { _id: artistId, albums } =
+    // send data with event emitter to elasticsearch
+    const { _id, albums } =
       await this.artistModel.findOne(
         { 'albums.albumName': albumName },
         { 'albums.$': 1 },
       );
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
-      id: artistId,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+    const elasticData = {
+      id: _id,
+      albums,
+    };
+    this.eventEmitter.emit(
+      'update.model',
+      elasticData,
+    );
 
     return {
       msg: 'track removed successfuly',
-      mongoRemoved: removedTrack.modifiedCount,
-      elasticRemoved: elastic._shards.successful,
+      removed: removedTrack.modifiedCount,
     };
   }
 
@@ -293,9 +270,5 @@ export class TrackService {
     if (String(second).length == 1)
       second = `0${second}`;
     return hour + ':' + minutes + ':' + second;
-  }
-
-  copyObject(object: object) {
-    return JSON.parse(JSON.stringify(object));
   }
 }

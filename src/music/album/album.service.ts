@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,15 +11,14 @@ import {
   AddAlbumDto,
   UpdateAlbumDto,
 } from './dto';
-import { Client } from '@elastic/elasticsearch';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AlbumService {
   constructor(
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
-    @Inject('ELASTICSEARCH_CLIENT')
-    private esClient: Client,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async addAlbum(dto: AddAlbumDto) {
@@ -62,20 +60,12 @@ export class AlbumService {
         _id: dto.artistId,
       });
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
+    // send data with event emitter to elasticsearch
+    const data = {
       id: dto.artistId,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      albums,
+    };
+    this.eventEmitter.emit('update.model', data);
 
     return albums;
   }
@@ -101,17 +91,6 @@ export class AlbumService {
 
     return album;
   }
-
-  // async findByGenre(genre: FindGenreDto) {
-  //   const music = await this.musicModel.find({
-  //     genre,
-  //   });
-
-  //   if (music.length == 0)
-  //     throw new NotFoundException();
-
-  //   return music;
-  // }
 
   async updateAlbumById(dto: UpdateAlbumDto) {
     // check exist album
@@ -141,29 +120,19 @@ export class AlbumService {
     if (updatedAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // update elastic
+    // send data with event emitter to elasticsearch
     const { albums } =
       await this.artistModel.findById(artistId);
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
+    const data = {
       id: artistId,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      albums,
+    };
+    this.eventEmitter.emit('update.model', data);
 
     return {
       msg: 'album info updated successfully',
-      mongoUpdated: updatedAlbum.modifiedCount,
-      elasticUpdated: elastic._shards.successful,
+      updated: updatedAlbum.modifiedCount,
     };
   }
 
@@ -190,29 +159,19 @@ export class AlbumService {
     if (removedAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // remove from elastic
+    // send data with event emitter to elasticsearch
     const { albums } =
       await this.artistModel.findById(artistId);
 
-    const elastic = await this.esClient.update({
-      index: 'musics',
+    const data = {
       id: artistId,
-      body: {
-        doc: {
-          albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      albums,
+    };
+    this.eventEmitter.emit('update.model', data);
 
     return {
       msg: 'album removed successfuly',
-      mongoRemoved: removedAlbum.modifiedCount,
-      elasticRemoved: elastic._shards.successful,
+      removed: removedAlbum.modifiedCount,
     };
   }
 }

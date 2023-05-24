@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,34 +11,27 @@ import {
   AddArtistDto,
   UpdateArtistDto,
 } from './dto';
-import { Client } from '@elastic/elasticsearch';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ArtistService {
   constructor(
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
-    @Inject('ELASTICSEARCH_CLIENT')
-    private esClient: Client,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async syncElasticWithMongo(id: string) {
     const artist =
       await this.artistModel.findById(id);
 
-    const elastic = await this.esClient.index({
-      index: 'musics',
+    // send data with event emitter to elasticsearch
+    const data = {
       id,
-      body: {
-        artistName: artist.artistName,
-        albums: artist.albums,
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      artistName: artist.artistName,
+      albums: artist.albums,
+    };
+    this.eventEmitter.emit('sync.artist', data);
 
     return 'synced';
   }
@@ -64,20 +56,8 @@ export class ArtistService {
     if (!artist)
       throw new InternalServerErrorException();
 
-    // add artist to elastic
-    const elastic = await this.esClient.index({
-      index: 'musics',
-      id: artist._id,
-      body: {
-        artistName: artist.artistName,
-        albums: artist.albums,
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+    // send data with event emitter to elasticsearch
+    this.eventEmitter.emit('add.artist', artist);
 
     return artist;
   }
@@ -122,26 +102,16 @@ export class ArtistService {
     if (updatedArtist.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // update elastic
-    const elastic = await this.esClient.update({
-      index: 'musics',
+    // send data with event emitter to elasticsearch
+    const data = {
       id,
-      body: {
-        doc: {
-          artistName: dto.artistName,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      artistName: dto.artistName,
+    };
+    this.eventEmitter.emit('edit.artist', data);
 
     return {
       msg: 'artist info updated successfully',
-      mongoUpdated: updatedArtist.modifiedCount,
-      elasticUpdated: elastic._shards.successful,
+      updated: updatedArtist.modifiedCount,
     };
   }
 
@@ -160,20 +130,12 @@ export class ArtistService {
     if (deletedArtist.deletedCount == 0)
       throw new InternalServerErrorException();
 
-    // remove from elastic
-    const elastic = await this.esClient.delete({
-      index: 'musics',
-      id: _id,
-    });
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+    // send data with event emitter to elasticsearch
+    this.eventEmitter.emit('remove.artist', _id);
 
     return {
       msg: 'artist removed successfully',
-      mongoRemoved: deletedArtist.deletedCount,
-      elasticRemoved: elastic._shards.successful,
+      removed: deletedArtist.deletedCount,
     };
   }
 
