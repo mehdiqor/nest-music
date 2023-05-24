@@ -15,6 +15,7 @@ export class ElasticService {
     private esClient: Client,
   ) {}
 
+  // Search
   async findWIthWord(search: string) {
     const body = await this.esClient.search({
       index: 'musics',
@@ -61,6 +62,7 @@ export class ElasticService {
     return result;
   }
 
+  // Admin Panel
   async removeDirectlyFromElastic(id: string) {
     const elastic = await this.esClient.delete({
       index: 'musics',
@@ -70,6 +72,7 @@ export class ElasticService {
       console.log('not deleted from elastic');
   }
 
+  // Index Crud
   async createIndex(dto: IndexDto) {
     // check exist index
     const exist = await this.checkExistIndex(dto);
@@ -106,6 +109,7 @@ export class ElasticService {
     return { msg: 'Index removed' };
   }
 
+  // Event Emitter
   @OnEvent('sync.artist')
   async syncArtist(data) {
     const elastic = await this.esClient.index({

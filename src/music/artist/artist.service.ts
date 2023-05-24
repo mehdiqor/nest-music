@@ -21,6 +21,7 @@ export class ArtistService {
     private eventEmitter: EventEmitter2,
   ) {}
 
+  // Move to Admin Panel
   async syncElasticWithMongo(id: string) {
     const artist =
       await this.artistModel.findById(id);
