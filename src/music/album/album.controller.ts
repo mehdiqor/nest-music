@@ -41,14 +41,10 @@ export class AlbumController {
     );
   }
 
-  @Get('find')
+  @Get('find-one')
   @ApiProperty()
-  getOneAlbum(
-    @Query('albumName') albumName: string,
-  ) {
-    return this.albumService.getOneAlbum(
-      albumName,
-    );
+  getAlbumById(@Query('id') id: string) {
+    return this.albumService.getAlbumById(id);
   }
 
   @Patch('update')
@@ -59,12 +55,8 @@ export class AlbumController {
     return this.albumService.updateAlbumById(dto);
   }
 
-  @Patch('remove/:albumName')
-  removeAlbum(
-    @Param('albumName') albumName: string,
-  ) {
-    return this.albumService.removeAlbum(
-      albumName,
-    );
+  @Patch('remove/:id')
+  removeAlbumById(@Param('id') id: string) {
+    return this.albumService.removeAlbumById(id);
   }
 }

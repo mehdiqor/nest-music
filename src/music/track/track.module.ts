@@ -10,6 +10,7 @@ import { diskStorage } from 'multer';
 import { MulterModule } from '@nestjs/platform-express';
 import { join } from 'path';
 import { editFileName } from 'src/utils';
+import { ElasticModule } from 'src/elastic/elastic.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { editFileName } from 'src/utils';
         schema: ArtistSchema,
       },
     ]),
+    ElasticModule,
   ],
   controllers: [TrackController],
   providers: [TrackService],

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,19 +12,22 @@ import {
   AddAlbumDto,
   UpdateAlbumDto,
 } from './dto';
+import { Client } from '@elastic/elasticsearch';
 
 @Injectable()
 export class AlbumService {
   constructor(
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
+    @Inject('ELASTICSEARCH_CLIENT')
+    private esClient: Client,
   ) {}
 
   async addAlbum(dto: AddAlbumDto) {
     // check exist artist
     const checkExistAlbum =
       await this.artistModel.findOne(
-        { 'albums.name': dto.name },
+        { 'albums.albumName': dto.albumName },
         { 'albums.$': 1 },
       );
 
@@ -36,12 +40,12 @@ export class AlbumService {
     const addAlbum =
       await this.artistModel.updateOne(
         {
-          name: dto.artistName,
+          _id: dto.artistId,
         },
         {
           $push: {
             albums: {
-              name: dto.name,
+              albumName: dto.albumName,
               year: dto.year,
               genre: dto.genre,
             },
@@ -52,10 +56,28 @@ export class AlbumService {
     if (addAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    const album = await this.getOneAlbum(
-      dto.name,
-    );
-    return album;
+    // add to elastic
+    const { albums } =
+      await this.artistModel.findOne({
+        _id: dto.artistId,
+      });
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: dto.artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
+    return albums;
   }
 
   async getAlbumsOfArtist(artistName: string) {
@@ -69,9 +91,9 @@ export class AlbumService {
     return album;
   }
 
-  async getOneAlbum(albumName: string) {
+  async getAlbumById(id: string) {
     const album = await this.artistModel.findOne(
-      { 'albums.name': albumName },
+      { 'albums._id': id },
       { 'albums.$': 1 },
     );
 
@@ -93,14 +115,8 @@ export class AlbumService {
 
   async updateAlbumById(dto: UpdateAlbumDto) {
     // check exist album
-    const checkExistAlbum =
-      await this.artistModel.findOne(
-        { 'albums._id': dto.id },
-        { 'albums.$': 1 },
-      );
-
-    if (!checkExistAlbum)
-      throw new NotFoundException();
+    const { _id: artistId } =
+      await this.getAlbumById(dto.id);
 
     // delete empty data
     Object.keys(dto).forEach((key) => {
@@ -115,7 +131,7 @@ export class AlbumService {
         },
         {
           $set: {
-            'albums.$.name': dto.name,
+            'albums.$.albumName': dto.albumName,
             'albums.$.year': dto.year,
             'albums.$.genre': dto.genre,
           },
@@ -125,18 +141,36 @@ export class AlbumService {
     if (updatedAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
+    // update elastic
+    const { albums } =
+      await this.artistModel.findById(artistId);
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
     return {
       msg: 'album info updated successfully',
-      updated: updatedAlbum.modifiedCount,
+      mongoUpdated: updatedAlbum.modifiedCount,
+      elasticUpdated: elastic._shards.successful,
     };
   }
 
-  async removeAlbum(albumName: string) {
+  async removeAlbumById(id: string) {
     // check exist album
-    const find = await this.getOneAlbum(
-      albumName,
-    );
-    const id = find.albums[0]._id;
+    const { _id: artistId } =
+      await this.getAlbumById(id);
 
     // remove album from DB
     const removedAlbum =
@@ -156,9 +190,29 @@ export class AlbumService {
     if (removedAlbum.modifiedCount == 0)
       throw new InternalServerErrorException();
 
+    // remove from elastic
+    const { albums } =
+      await this.artistModel.findById(artistId);
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
     return {
       msg: 'album removed successfuly',
-      removed: removedAlbum.modifiedCount,
+      mongoRemoved: removedAlbum.modifiedCount,
+      elasticRemoved: elastic._shards.successful,
     };
   }
 }

@@ -6,7 +6,6 @@ import {
   Artist,
   ArtistSchema,
 } from 'src/schemas/music.schema';
-import { ElasticService } from 'src/elastic/elastic.service';
 import { ElasticModule } from 'src/elastic/elastic.module';
 
 @Module({
@@ -20,6 +19,6 @@ import { ElasticModule } from 'src/elastic/elastic.module';
     ElasticModule
   ],
   controllers: [ArtistController],
-  providers: [ArtistService, ElasticService],
+  providers: [ArtistService],
 })
 export class ArtistModule {}

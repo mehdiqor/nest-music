@@ -16,7 +16,7 @@ export class UpdateAlbumDto {
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
-  name?: string;
+  albumName?: string;
 
   @IsString()
   @IsOptional()

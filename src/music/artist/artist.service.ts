@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,14 +12,15 @@ import {
   AddArtistDto,
   UpdateArtistDto,
 } from './dto';
-import { ElasticService } from 'src/elastic/elastic.service';
+import { Client } from '@elastic/elasticsearch';
 
 @Injectable()
 export class ArtistService {
   constructor(
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
-    private elasticService: ElasticService,
+    @Inject('ELASTICSEARCH_CLIENT')
+    private esClient: Client,
   ) {}
 
   async addArtist(dto: AddArtistDto) {
@@ -42,7 +44,19 @@ export class ArtistService {
       throw new InternalServerErrorException();
 
     // add artist to elastic
-    await this.elasticService.addArtist(artist);
+    const elastic = await this.esClient.index({
+      index: 'musics',
+      id: artist._id,
+      body: {
+        artistName: artist.artistName,
+        albums: artist.albums,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
 
     return artist;
   }
@@ -63,7 +77,10 @@ export class ArtistService {
     return artist;
   }
 
-  async updateArtistById(id: string, dto: UpdateArtistDto) {
+  async updateArtistById(
+    id: string,
+    dto: UpdateArtistDto,
+  ) {
     // check exist artist
     await this.getArtistById(id);
 
@@ -85,11 +102,25 @@ export class ArtistService {
       throw new InternalServerErrorException();
 
     // update elastic
-    await this.elasticService.updateElastic(id, dto);
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id,
+      body: {
+        doc: {
+          artistName: dto.artistName,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
 
     return {
       msg: 'artist info updated successfully',
-      updated: updatedArtist.modifiedCount,
+      mongoUpdated: updatedArtist.modifiedCount,
+      elasticUpdated: elastic._shards.successful,
     };
   }
 
@@ -109,11 +140,19 @@ export class ArtistService {
       throw new InternalServerErrorException();
 
     // remove from elastic
-    await this.elasticService.removeArtist(_id);
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id: _id,
+    });
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
 
     return {
       msg: 'artist removed successfully',
-      removed: deletedArtist.deletedCount,
+      mongoRemoved: deletedArtist.deletedCount,
+      elasticRemoved: elastic._shards.successful,
     };
   }
 

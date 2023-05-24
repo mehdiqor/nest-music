@@ -14,6 +14,79 @@ export class ElasticService {
     private esClient: Client,
   ) {}
 
+  async findWIthWord(search: string) {
+    const body = await this.esClient.search({
+      index: 'musics',
+      q: search,
+    });
+
+    const result = body.hits.hits;
+    return result;
+  }
+
+  async searchWithRegexp(search: string) {
+    const body = await this.esClient.search({
+      index: 'musics',
+      query: {
+        bool: {
+          should: [
+            {
+              regexp: {
+                artistName: `.*${search}.*`,
+              },
+            },
+            {
+              regexp: {
+                albumName: `.*${search}.*`,
+              },
+            },
+            {
+              regexp: {
+                trackName: `.*${search}.*`,
+              },
+            },
+            {
+              regexp: { genre: `.*${search}.*` },
+            },
+            {
+              regexp: { tags: `.*${search}.*` },
+            },
+          ],
+        },
+      },
+    });
+
+    const result = body.hits.hits;
+    return result;
+  }
+
+  async syncWithMongo(artistId: string, artist) {
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: artistId,
+      body: {
+        doc: {
+          artistName: artist.artistName,
+          albums: artist.albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  async removeDirectlyFromElastic(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id,
+    });
+    if (elastic?._shards?.successful == 0)
+      console.log('not deleted from elastic');
+  }
+
   async createIndex(dto: IndexDto) {
     // check exist index
     const exist = await this.checkExistIndex(dto);
@@ -48,92 +121,5 @@ export class ElasticService {
       throw new InternalServerErrorException();
 
     return { msg: 'Index removed' };
-  }
-
-  async addArtist(data) {
-    const elastic = await this.esClient.index({
-      index: 'musics',
-      id: data._id,
-      body: {
-        artistName: data.artistName,
-        albums: data.albums
-      },
-    });
-
-    if (!elastic) console.log('elastic error');
-  }
-
-  async updateElastic(id: string, data) {
-    const elastic = await this.esClient.update({
-      index: 'musics',
-      id,
-      body: {
-        doc: {
-          ...data,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      console.log('elastic error');
-  }
-
-  async removeArtist(id: string) {
-    const elastic = await this.esClient.delete({
-      index: 'musics',
-      id,
-    });
-    if (elastic?._shards?.successful == 0)
-      console.log('not deleted from elastic');
-  }
-
-  async removeDirectlyFromElastic(id: string) {
-    const elastic = await this.esClient.delete({
-      index: 'musics',
-      id,
-    });
-    if (elastic?._shards?.successful == 0)
-      console.log('not deleted from elastic');
-  }
-
-  async elasticSearchInMusics(search: string) {
-    const body = await this.esClient.search({
-      index: 'musics',
-      q: search,
-    });
-
-    const result = body.hits.hits;
-    return result;
-  }
-  // ta inja OKeee
-
-  async searchengine(search: string) {
-    const body = await this.esClient.search({
-      index: 'musics',
-      query: {
-        bool: {
-          should: [
-            {
-              regexp: { name: `.*${search}.*` },
-            },
-            {
-              regexp: { artist: `.*${search}.*` },
-            },
-            {
-              regexp: { album: `.*${search}.*` },
-            },
-            {
-              regexp: { genre: `.*${search}.*` },
-            },
-            {
-              regexp: { tags: `.*${search}.*` },
-            },
-          ],
-        },
-      },
-    });
-
-    const result = body.hits.hits;
-    return result;
   }
 }

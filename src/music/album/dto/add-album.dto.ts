@@ -11,12 +11,12 @@ export class AddAlbumDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  artistName: string;
+  artistId: string;
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  name: string;
+  albumName: string;
 
   @IsString()
   @IsOptional()

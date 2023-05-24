@@ -21,6 +21,42 @@ export class ElasticController {
     private readonly elasticService: ElasticService,
   ) {}
 
+  @Get('find')
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+  })
+  findWIthWord(@Query('search') search: string) {
+    return this.elasticService.findWIthWord(
+      search,
+    );
+  }
+
+  @Get('regexp')
+  // @Render('search-engine/search')
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+  })
+  searchWithRegexp(
+    @Query('search') search: string,
+  ) {
+    return this.elasticService.searchWithRegexp(
+      search,
+    );
+  }
+
+  @Delete('remove')
+  removeDirectlyFromElastic(
+    @Query('id') id: string,
+  ) {
+    return this.elasticService.removeDirectlyFromElastic(
+      id,
+    );
+  }
+
   @Post('add-index')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
@@ -45,41 +81,5 @@ export class ElasticController {
   )
   removeIndex(@Body() dto: IndexDto) {
     return this.elasticService.removeIndex(dto);
-  }
-
-  @Get('find')
-  @ApiQuery({
-    name: 'search',
-    type: String,
-    required: false,
-  })
-  elasticSearchInMusics(
-    @Query('search') search: string,
-  ) {
-    return this.elasticService.elasticSearchInMusics(
-      search,
-    );
-  }
-
-  @Get('search')
-  // @Render('search-engine/search')
-  @ApiQuery({
-    name: 'search',
-    type: String,
-    required: false,
-  })
-  searchengine(@Query('search') search: string) {
-    return this.elasticService.searchengine(
-      search,
-    );
-  }
-
-  @Delete('remove')
-  removeDirectlyFromElastic(
-    @Query('id') id: string,
-  ) {
-    return this.elasticService.removeDirectlyFromElastic(
-      id,
-    );
   }
 }

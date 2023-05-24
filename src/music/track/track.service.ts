@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -14,6 +15,7 @@ import {
 } from './dto';
 import getAudioDurationInSeconds from 'get-audio-duration';
 import { deleteFileInPublic } from 'src/utils';
+import { Client } from '@elastic/elasticsearch';
 
 @Injectable()
 export class TrackService {
@@ -21,6 +23,8 @@ export class TrackService {
     @InjectModel(Artist.name)
     private artistModel: Model<Artist>,
     private config: ConfigService,
+    @Inject('ELASTICSEARCH_CLIENT')
+    private esClient: Client,
   ) {}
 
   async addTrack(
@@ -28,12 +32,12 @@ export class TrackService {
     file: Express.Multer.File,
   ) {
     // check exist track
-    const findAlbums =
-      await this.artistModel.findOne({
-        artistName: dto.artistName,
-      });
+    const artist =
+      await this.artistModel.findById(
+        dto.artistId,
+      );
 
-    const album = findAlbums.albums.find(
+    const album = artist.albums.find(
       (t) => t.albumName == dto.albumName,
     );
     const findTrack = album.tracks.find(
@@ -75,7 +79,7 @@ export class TrackService {
     const track =
       await this.artistModel.updateOne(
         {
-          artistName: dto.artistName,
+          _id: dto.artistId,
           'albums.albumName': dto.albumName,
         },
         {
@@ -88,7 +92,29 @@ export class TrackService {
     if (track.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    return { msg: 'created successfully' };
+    // add to elastic
+    const { albums } = artist;
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: dto.artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
+    console.log({
+      msg: 'created successfully',
+      mongoAdd: track.modifiedCount,
+      elasticAdd: elastic._shards.successful,
+    });
   }
 
   async findTrack(
