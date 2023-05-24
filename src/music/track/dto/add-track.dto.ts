@@ -9,7 +9,7 @@ export class AddTrackDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  artistId: string;
+  artistName: string;
 
   @IsString()
   @IsNotEmpty()

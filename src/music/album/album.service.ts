@@ -82,7 +82,7 @@ export class AlbumService {
 
   async getAlbumsOfArtist(artistName: string) {
     const album = await this.artistModel.findOne(
-      { name: artistName },
+      { artistName },
       { albums: 1, name: 1, year: 1 },
     );
 

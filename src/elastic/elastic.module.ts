@@ -6,7 +6,6 @@ import { Client } from '@elastic/elasticsearch';
 @Module({
   controllers: [ElasticController],
   providers: [
-    ElasticService,
     {
       provide: 'ELASTICSEARCH_CLIENT',
       useFactory: () => {
@@ -21,7 +20,11 @@ import { Client } from '@elastic/elasticsearch';
         });
       },
     },
+    ElasticService,
   ],
-  exports: ['ELASTICSEARCH_CLIENT', ElasticService],
+  exports: [
+    'ELASTICSEARCH_CLIENT',
+    ElasticService,
+  ],
 })
 export class ElasticModule {}

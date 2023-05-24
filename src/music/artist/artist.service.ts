@@ -23,6 +23,27 @@ export class ArtistService {
     private esClient: Client,
   ) {}
 
+  async syncElasticWithMongo(id: string) {
+    const artist =
+      await this.artistModel.findById(id);
+
+    const elastic = await this.esClient.index({
+      index: 'musics',
+      id,
+      body: {
+        artistName: artist.artistName,
+        albums: artist.albums,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
+    return 'synced';
+  }
+
   async addArtist(dto: AddArtistDto) {
     // check exist artist
     const checkExistArtist =

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,13 @@ export class ArtistController {
   constructor(
     private readonly artistService: ArtistService,
   ) {}
+
+  @Get('sync')
+  syncElasticWithMongo(@Query('id') id: string) {
+    return this.artistService.syncElasticWithMongo(
+      id,
+    );
+  }
 
   @Post('add')
   @ApiConsumes(

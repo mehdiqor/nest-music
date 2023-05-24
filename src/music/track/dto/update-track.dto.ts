@@ -12,11 +12,16 @@ export class UpdateTrackDto {
   trackId: string;
 
   @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  albumName: string;
+
+  @IsString()
   @IsOptional()
   @ApiProperty({
     required: false,
   })
-  name?: string;
+  trackName?: string;
 
   @IsString({ each: true })
   @IsOptional()

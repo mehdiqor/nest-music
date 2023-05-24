@@ -32,10 +32,9 @@ export class TrackService {
     file: Express.Multer.File,
   ) {
     // check exist track
-    const artist =
-      await this.artistModel.findById(
-        dto.artistId,
-      );
+    const artist = await this.artistModel.findOne(
+      { artistName: dto.artistName },
+    );
 
     const album = artist.albums.find(
       (t) => t.albumName == dto.albumName,
@@ -68,7 +67,7 @@ export class TrackService {
 
     // add track to DB
     const data = {
-      name: dto.trackName,
+      trackName: dto.trackName,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
       fileName: file.filename,
@@ -79,7 +78,7 @@ export class TrackService {
     const track =
       await this.artistModel.updateOne(
         {
-          _id: dto.artistId,
+          artistName: dto.artistName,
           'albums.albumName': dto.albumName,
         },
         {
@@ -93,11 +92,14 @@ export class TrackService {
       throw new InternalServerErrorException();
 
     // add to elastic
-    const { albums } = artist;
+    const { _id, albums } =
+      await this.artistModel.findOne({
+        artistName: dto.artistName,
+      });
 
     const elastic = await this.esClient.update({
       index: 'musics',
-      id: dto.artistId,
+      id: _id,
       body: {
         doc: {
           albums,
@@ -110,23 +112,24 @@ export class TrackService {
         'elastic error',
       );
 
-    console.log({
+    return {
       msg: 'created successfully',
       mongoAdd: track.modifiedCount,
       elasticAdd: elastic._shards.successful,
-    });
+    };
   }
 
   async findTrack(
     trackName: string,
     albumName: string,
   ) {
-    const findAlbums =
-      await this.artistModel.findOne({
-        'albums.tracks.name': trackName,
-      });
+    const artist = await this.artistModel.findOne(
+      {
+        'albums.tracks.trackName': trackName,
+      },
+    );
 
-    const album = findAlbums.albums.find(
+    const album = artist.albums.find(
       (t) => t.albumName == albumName,
     );
     const track = album.tracks.find(
@@ -139,17 +142,21 @@ export class TrackService {
   }
 
   async updateTrack(dto: UpdateTrackDto) {
-    // check track exist
-    // await this.findTrackById(dto.trackId);
-
     // delete empty data
     Object.keys(dto).forEach((key) => {
       if (!dto[key]) delete dto[key];
     });
 
+    // save tags in array
+    let tag: any;
+    if (!Array.isArray(dto.tags)) {
+      tag = dto.tags.split(',');
+    }
+    dto.tags = tag;
+
     // update track info
     const data = {
-      name: dto.name,
+      trackName: dto.trackName,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
     };
@@ -169,9 +176,32 @@ export class TrackService {
     if (updatedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
+    // add to elastic
+    const { _id: artistId, albums } =
+      await this.artistModel.findOne(
+        { 'albums.albumName': dto.albumName },
+        { 'albums.$': 1 },
+      );
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
     return {
-      msg: 'album info updated successfully',
-      updated: updatedTrack.modifiedCount,
+      msg: 'track info updated successfully',
+      mongoUpdated: updatedTrack.modifiedCount,
+      elasticUpdated: elastic._shards.successful,
     };
   }
 
@@ -192,12 +222,12 @@ export class TrackService {
     const removedTrack =
       await this.artistModel.updateOne(
         {
-          'albums.tracks.name': trackName,
+          'albums.tracks.trackName': trackName,
         },
         {
           $pull: {
             'albums.$.tracks': {
-              name: trackName,
+              trackName
             },
           },
         },
@@ -206,9 +236,32 @@ export class TrackService {
     if (removedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
+    // add to elastic
+    const { _id: artistId, albums } =
+      await this.artistModel.findOne(
+        { 'albums.albumName': albumName },
+        { 'albums.$': 1 },
+      );
+
+    const elastic = await this.esClient.update({
+      index: 'musics',
+      id: artistId,
+      body: {
+        doc: {
+          albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+
     return {
       msg: 'track removed successfuly',
-      removed: removedTrack.modifiedCount,
+      mongoRemoved: removedTrack.modifiedCount,
+      elasticRemoved: elastic._shards.successful,
     };
   }
 

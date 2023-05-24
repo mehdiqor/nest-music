@@ -60,24 +60,6 @@ export class ElasticService {
     return result;
   }
 
-  async syncWithMongo(artistId: string, artist) {
-    const elastic = await this.esClient.update({
-      index: 'musics',
-      id: artistId,
-      body: {
-        doc: {
-          artistName: artist.artistName,
-          albums: artist.albums,
-        },
-      },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
-  }
-
   async removeDirectlyFromElastic(id: string) {
     const elastic = await this.esClient.delete({
       index: 'musics',

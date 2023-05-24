@@ -1,15 +1,13 @@
-import * as path from 'path';
+import { join, extname } from 'path';
 
 export const editFileName = (
   req,
   file,
   callback,
 ) => {
-  const fileExtName = path.extname(
-    file.originalname,
-  );
-  const name = path.join(
-    req.body.ArtistName + '-' + req.body.name,
+  const fileExtName = extname(file.originalname);
+  const name = join(
+    req.body.artistName + '-' + req.body.trackName,
   );
 
   const date = new Date();

@@ -19,6 +19,8 @@ services:
     ports:
       - ${ES_PORT}:9200
     restart: always
+    networks:
+      - mynetwork
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
@@ -26,6 +28,11 @@ services:
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
 volumes:
   elasticsearch-data:
     driver: local
