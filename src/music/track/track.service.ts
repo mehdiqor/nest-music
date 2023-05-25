@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Artist } from 'src/schemas/music.schema';
 import {
   AddTrackDto,
@@ -110,7 +110,7 @@ export class TrackService {
     };
   }
 
-  async findTrack(
+  async findTrackByName(
     trackName: string,
     albumName: string,
   ) {
@@ -132,21 +132,85 @@ export class TrackService {
     return track;
   }
 
-  // bug report
+  async findTrackById(id: string) {
+    const findTrack =
+      await this.artistModel.aggregate([
+        {
+          $unwind: '$albums',
+        },
+        {
+          $unwind: '$albums.tracks',
+        },
+        {
+          $match: {
+            'albums.tracks._id': {
+              $eq: new mongoose.Types.ObjectId(
+                id,
+              ),
+            },
+          },
+        },
+        // {
+        //   $project: {
+        //     trackName: '$albums.tracks.trackName',
+        //     tags: '$albums.tracks.tags',
+        //     youtube_link:
+        //       '$albums.tracks.youtube_link',
+        //     length: '$albums.tracks.length',
+        //     fileName: '$albums.tracks.fileName',
+        //     filePath: '$albums.tracks.filePath',
+        //     _id: '$albums.tracks._id',
+        //   },
+        // },
+      ]);
+
+    if (!findTrack) throw new NotFoundException();
+    return findTrack;
+  }
+
+  // async findAggregate(id: string) {
+  //   const findTrack =
+  //     await this.artistModel.aggregate([
+  //       {
+  //         $addFields: {
+  //           trackDetail: {
+  //             $map: {
+  //               input: '$albums',
+  //               as: 'album',
+  //               in: {
+  //                 $arrayElemAt: [
+  //                   {
+  //                     $filter: {
+  //                       input: '$tracks',
+  //                       as: 'track',
+  //                       cond: {
+  //                         $eq: [
+  //                           '$$track._id',
+  //                           id,
+  //                         ],
+  //                       },
+  //                     },
+  //                   },
+  //                   0,
+  //                 ],
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     ]);
+
+  //   if (!findTrack) throw new NotFoundException();
+
+  //   return findTrack[0];
+  // }
+
   async updateTrack(dto: UpdateTrackDto) {
     // check exist track
-    const artist = await this.artistModel.findOne(
-      { 'albums.albumName': dto.albumName },
+    const findTrack = await this.findTrackById(
+      dto.trackId,
     );
-
-    const album = artist.albums.find(
-      (t) => t.albumName == dto.albumName,
-    );
-    const track = album.tracks.find(
-      (t) => t.trackName === dto.trackName,
-    );
-
-    if (!track) throw new NotFoundException();
+    const { _id: albumId } = findTrack[0].albums;
 
     // delete empty data
     Object.keys(dto).forEach((key) => {
@@ -164,7 +228,7 @@ export class TrackService {
 
     // update track info
     const data = {
-      trackName: dto.newTrackName,
+      trackName: dto.trackName,
       tags: dto.tags,
       youtube_link: dto.youtube_link,
     };
@@ -172,8 +236,7 @@ export class TrackService {
     const updatedTrack =
       await this.artistModel.updateOne(
         {
-          'albums.tracks.trackName':
-            dto.trackName,
+          'albums.tracks._id': dto.trackId,
         },
         {
           $set: {
@@ -188,7 +251,7 @@ export class TrackService {
     // // send data with event emitter to elasticsearch
     const { _id, albums } =
       await this.artistModel.findOne(
-        { 'albums.albumName': dto.albumName },
+        { 'albums._id': albumId },
         { 'albums.$': 1 },
       );
 
@@ -212,10 +275,11 @@ export class TrackService {
     albumName: string,
   ) {
     // check exist track
-    const { fileName } = await this.findTrack(
-      trackName,
-      albumName,
-    );
+    const { fileName } =
+      await this.findTrackByName(
+        trackName,
+        albumName,
+      );
 
     // delete track file
     deleteFileInPublic(fileName);

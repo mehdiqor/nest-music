@@ -37,16 +37,22 @@ export class TrackController {
     return this.trackService.addTrack(dto, file);
   }
 
-  @Get('find')
-  findTrack(
+  @Get('find-name')
+  findTrackByName(
     @Query('trackName') trackName: string,
     @Query('albumName') albumName: string,
   ) {
-    return this.trackService.findTrack(
+    return this.trackService.findTrackByName(
       trackName,
       albumName,
     );
   }
+
+  @Get('find-id')
+  findTrackById(@Query('id') id: string) {
+    return this.trackService.findTrackById(id);
+  }
+
   @Patch('update')
   @ApiConsumes(
     'application/x-www-form-urlencoded',
