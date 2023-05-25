@@ -1,8 +1,7 @@
 FROM node:18.16.0
-
 WORKDIR /app
-COPY package.json .
+COPY package*.json ./
 RUN yarn
 COPY . .
-
-CMD yarn start:dev
+EXPOSE ${PORT}
+CMD ["yarn", "start:dev"]
