@@ -43,9 +43,4 @@ export class MovieController {
   ) {
     return this.movieService.removeMovie(name, title);
   }
-
-  @Get('all')
-  getMoviesOfDirector(@Query('name') name: string) {
-    return this.movieService.getMoviesOfDirector(name);
-  }
 }

@@ -8,7 +8,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Artist } from 'src/schemas/music.schema';
 import { AddArtistDto, UpdateArtistDto } from './dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  EventEmitter2,
+  OnEvent,
+} from '@nestjs/event-emitter';
 
 @Injectable()
 export class ArtistService {
@@ -17,21 +20,6 @@ export class ArtistService {
     private artistModel: Model<Artist>,
     private eventEmitter: EventEmitter2,
   ) {}
-
-  // Move to Admin Panel
-  async syncElasticWithMongo(id: string) {
-    const artist = await this.artistModel.findById(id);
-
-    // send data with event emitter to elasticsearch
-    const data = {
-      id,
-      artistName: artist.artistName,
-      albums: artist.albums,
-    };
-    this.eventEmitter.emit('sync.artist', data);
-
-    return 'synced';
-  }
 
   async addArtist(dto: AddArtistDto) {
     // check exist artist
@@ -55,20 +43,6 @@ export class ArtistService {
 
     // send data with event emitter to elasticsearch
     this.eventEmitter.emit('add.artist', artist);
-
-    return artist;
-  }
-
-  async getAllArtists() {
-    const allArtists = await this.artistModel.find();
-
-    return allArtists;
-  }
-
-  async getArtistById(id: string) {
-    const artist = await this.artistModel.findById(id);
-
-    if (!artist) throw new NotFoundException();
 
     return artist;
   }
@@ -127,6 +101,14 @@ export class ArtistService {
     };
   }
 
+  async getArtistById(id: string) {
+    const artist = await this.artistModel.findById(id);
+
+    if (!artist) throw new NotFoundException();
+
+    return artist;
+  }
+
   async findArtist(artistName: string) {
     const artist = await this.artistModel.findOne({
       artistName,
@@ -135,5 +117,42 @@ export class ArtistService {
     if (!artist) throw new NotFoundException();
 
     return artist;
+  }
+
+  // Admin Panel
+  @OnEvent('admin.musicData')
+  async getAllDataOfMusics(
+    resolve: (findAll: any) => void,
+  ) {
+    const findAll = await this.artistModel.find();
+
+    resolve(findAll);
+  }
+
+  @OnEvent('admin.albums')
+  async getAlbumsOfArtist(
+    artistName: string,
+    resolve: (albums: any) => void,
+  ) {
+    const albums = await this.artistModel.findOne(
+      { artistName },
+      { albums: 1, name: 1, year: 1 },
+    );
+
+    if (!albums) resolve('NotFound');
+    resolve(albums);
+  }
+
+  @OnEvent('admin.musicSync')
+  async syncMusicDataWithElastic(id: string) {
+    const artist = await this.artistModel.findById(id);
+
+    const data = {
+      id,
+      artistName: artist.artistName,
+      albums: artist.albums,
+    };
+
+    this.eventEmitter.emit('music.sync', data);
   }
 }

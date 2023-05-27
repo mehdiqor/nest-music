@@ -12,10 +12,7 @@ import {
   ApiProperty,
 } from '@nestjs/swagger';
 import { AlbumService } from './album.service';
-import {
-  AddAlbumDto,
-  UpdateAlbumDto,
-} from './dto';
+import { AddAlbumDto, UpdateAlbumDto } from './dto';
 
 @ApiTags('Music')
 @Controller('album')
@@ -25,32 +22,13 @@ export class AlbumController {
   ) {}
 
   @Patch('add')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   addAlbum(@Body() dto: AddAlbumDto) {
     return this.albumService.addAlbum(dto);
   }
 
-  @Get('albums')
-  getAlbumsOfArtist(
-    @Query('artistName') artistName: string,
-  ) {
-    return this.albumService.getAlbumsOfArtist(
-      artistName,
-    );
-  }
-
-  @Get('find-one')
-  @ApiProperty()
-  getAlbumById(@Query('id') id: string) {
-    return this.albumService.getAlbumById(id);
-  }
-
   @Patch('update')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   updateAlbumById(@Body() dto: UpdateAlbumDto) {
     return this.albumService.updateAlbumById(dto);
   }

@@ -5,7 +5,6 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { IndexDto } from './dto';
 import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
@@ -63,17 +62,24 @@ export class ElasticService {
   }
 
   // Admin Panel
-  async removeDirectlyFromElastic(id: string) {
+  @OnEvent('admin.remove')
+  async removeDirectlyFromElastic(data) {
     const elastic = await this.esClient.delete({
-      index: 'musics',
-      id,
+      index: data.index,
+      id: data.id,
     });
-    if (elastic?._shards?.successful == 0)
-      console.log('not deleted from elastic');
+
+    if (elastic._shards.successful == 0)
+      console.log('elastic error');
+
+    console.log({
+      msg: 'Removed',
+      result: elastic._shards,
+    });
   }
 
-  @OnEvent('sync.artist')
-  async syncArtist(data) {
+  @OnEvent('music.sync')
+  async syncMusicDataWithElastic(data) {
     const elastic = await this.esClient.index({
       index: 'musics',
       id: data.id,
@@ -84,43 +90,70 @@ export class ElasticService {
     });
 
     if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
+      console.log('elastic error');
+
+    console.log({
+      msg: 'Synced',
+      result: elastic._shards,
+    });
   }
 
-  // Index CRUD
-  async createIndex(dto: IndexDto) {
+  @OnEvent('film.sync')
+  async syncFilmDataWithElastic(data) {
+    const elastic = await this.esClient.index({
+      index: 'film',
+      id: data.id,
+      body: {
+        name: data.name,
+        movies: data.movies,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      console.log('elastic error');
+
+    console.log({
+      msg: 'Synced',
+      result: elastic._shards,
+    });
+  }
+
+  @OnEvent('admin.createIndex')
+  async createIndex(indexName: string) {
     // check exist index
-    const exist = await this.checkExistIndex(dto);
+    const exist = await this.checkExistIndex(indexName);
     if (exist) throw new ConflictException();
 
     // add index
     const index = await this.esClient.indices.create({
-      index: dto.indexName,
+      index: indexName,
     });
     console.log(index);
-
-    return index;
   }
 
-  async checkExistIndex(dto: IndexDto) {
+  @OnEvent('admin.checkIndex')
+  async checkExistIndex(indexName: string) {
     const index = await this.esClient.indices.exists({
-      index: dto.indexName,
+      index: indexName,
     });
 
+    console.log(index);
     return index;
   }
 
-  async removeIndex(dto: IndexDto) {
+  @OnEvent('admin.removeIndex')
+  async removeIndex(indexName: string) {
     const index = await this.esClient.indices.delete({
-      index: dto.indexName,
+      index: indexName,
     });
 
     if (index.acknowledged == false)
-      throw new InternalServerErrorException();
+      console.log('elastic error');
 
-    return { msg: 'Index removed' };
+    console.log({
+      msg: 'Index removed',
+      removed: index.acknowledged,
+    });
   }
 
   // Artist Event Emitter

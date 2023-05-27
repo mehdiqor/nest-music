@@ -4,7 +4,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  EventEmitter2,
+  OnEvent,
+} from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Director } from 'src/schemas/movie.schema';
@@ -114,5 +117,40 @@ export class DirectorService {
       if (!find) return false;
       return true;
     }
+  }
+
+  // Admin Panel
+  @OnEvent('admin.filmData')
+  async getAllDataOfFilms(resolve: (findAll: any) => void) {
+    const findAll = await this.directorModel.find();
+
+    resolve(findAll);
+  }
+
+  @OnEvent('admin.movies')
+  async getAlbumsOfArtist(
+    directorName: string,
+    resolve: (albums: any) => void,
+  ) {
+    const movies = await this.directorModel.findOne(
+      { name: directorName },
+      { movies: 1 },
+    );
+
+    if (!movies) resolve('NotFound');
+    resolve(movies);
+  }
+
+  @OnEvent('admin.filmSync')
+  async syncFilmDataWithElastic(id: string) {
+    const director = await this.directorModel.findById(id);
+
+    const data = {
+      id,
+      name: director.name,
+      movies: director.movies,
+    };
+
+    this.eventEmitter.emit('film.sync', data);
   }
 }

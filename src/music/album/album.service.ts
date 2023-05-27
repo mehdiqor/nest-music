@@ -70,28 +70,6 @@ export class AlbumService {
     return albums;
   }
 
-  async getAlbumsOfArtist(artistName: string) {
-    const album = await this.artistModel.findOne(
-      { artistName },
-      { albums: 1, name: 1, year: 1 },
-    );
-
-    if (!album) throw new NotFoundException();
-
-    return album;
-  }
-
-  async getAlbumById(id: string) {
-    const album = await this.artistModel.findOne(
-      { 'albums._id': id },
-      { 'albums.$': 1 },
-    );
-
-    if (!album) throw new NotFoundException();
-
-    return album;
-  }
-
   async updateAlbumById(dto: UpdateAlbumDto) {
     // check exist album
     const { _id: artistId } =
@@ -173,5 +151,16 @@ export class AlbumService {
       msg: 'album removed successfuly',
       removed: removedAlbum.modifiedCount,
     };
+  }
+
+  async getAlbumById(id: string) {
+    const album = await this.artistModel.findOne(
+      { 'albums._id': id },
+      { 'albums.$': 1 },
+    );
+
+    if (!album) throw new NotFoundException();
+
+    return album;
   }
 }
