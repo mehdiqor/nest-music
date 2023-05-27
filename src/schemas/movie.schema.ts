@@ -1,12 +1,9 @@
-import { ConfigService } from '@nestjs/config';
 import {
   Prop,
   Schema,
   SchemaFactory,
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
-const config = new ConfigService();
 
 @Schema()
 export class Movie extends Document {
@@ -23,10 +20,10 @@ export class Movie extends Document {
   link: string;
 
   @Prop()
-  fileName: string;
+  imageName: string;
 
   @Prop()
-  filePath: string;
+  imagePath: string;
 }
 
 export enum MovieGenre {
@@ -46,10 +43,6 @@ export const MovieSchema =
 MovieSchema.index({
   title: 'text',
   year: 'text',
-});
-
-MovieSchema.virtual('movieURL').get(function () {
-  return `${config.get('HOST')}:${config.get('PORT')}/${this.fileName}`;
 });
 
 @Schema()

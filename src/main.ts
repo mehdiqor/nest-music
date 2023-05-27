@@ -10,7 +10,6 @@ import {
 } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { HttpExeptionFilter } from './http-exeption';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {

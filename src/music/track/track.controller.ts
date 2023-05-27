@@ -8,15 +8,9 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiConsumes,
-} from '@nestjs/swagger';
+import { ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { TrackService } from './track.service';
-import {
-  AddTrackDto,
-  UpdateTrackDto,
-} from './dto';
+import { AddTrackDto, UpdateTrackDto } from './dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Track')
@@ -54,9 +48,7 @@ export class TrackController {
   }
 
   @Patch('update')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   updateTrack(@Body() dto: UpdateTrackDto) {
     return this.trackService.updateTrack(dto);
   }

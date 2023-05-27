@@ -8,10 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Artist } from 'src/schemas/music.schema';
-import {
-  AddTrackDto,
-  UpdateTrackDto,
-} from './dto';
+import { AddTrackDto, UpdateTrackDto } from './dto';
 import getAudioDurationInSeconds from 'get-audio-duration';
 import { deleteFileInPublic } from 'src/utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -30,9 +27,9 @@ export class TrackService {
     file: Express.Multer.File,
   ) {
     // check exist track
-    const artist = await this.artistModel.findOne(
-      { artistName: dto.artistName },
-    );
+    const artist = await this.artistModel.findOne({
+      artistName: dto.artistName,
+    });
 
     const album = artist.albums.find(
       (t) => t.albumName == dto.albumName,
@@ -59,8 +56,9 @@ export class TrackService {
     const filePath = `${host}:${port}/${file.filename}`;
 
     // calculate track length
-    const seconds =
-      await getAudioDurationInSeconds(file.path);
+    const seconds = await getAudioDurationInSeconds(
+      file.path,
+    );
     const length = this.getTime(seconds);
 
     // add track to DB
@@ -73,36 +71,31 @@ export class TrackService {
       length,
     };
 
-    const track =
-      await this.artistModel.updateOne(
-        {
-          artistName: dto.artistName,
-          'albums.albumName': dto.albumName,
+    const track = await this.artistModel.updateOne(
+      {
+        artistName: dto.artistName,
+        'albums.albumName': dto.albumName,
+      },
+      {
+        $push: {
+          'albums.$.tracks': data,
         },
-        {
-          $push: {
-            'albums.$.tracks': data,
-          },
-        },
-      );
+      },
+    );
 
     if (track.modifiedCount == 0)
       throw new InternalServerErrorException();
 
     // send data with event emitter to elasticsearch
-    const { _id, albums } =
-      await this.artistModel.findOne({
-        artistName: dto.artistName,
-      });
+    const { _id, albums } = await this.artistModel.findOne({
+      artistName: dto.artistName,
+    });
 
     const elasticData = {
       id: _id,
       albums,
     };
-    this.eventEmitter.emit(
-      'update.artist',
-      elasticData,
-    );
+    this.eventEmitter.emit('update.artist', elasticData);
 
     return {
       msg: 'created successfully',
@@ -114,11 +107,9 @@ export class TrackService {
     trackName: string,
     albumName: string,
   ) {
-    const artist = await this.artistModel.findOne(
-      {
-        'albums.tracks.trackName': trackName,
-      },
-    );
+    const artist = await this.artistModel.findOne({
+      'albums.tracks.trackName': trackName,
+    });
 
     const album = artist.albums.find(
       (t) => t.albumName == albumName,
@@ -133,36 +124,33 @@ export class TrackService {
   }
 
   async findTrackById(id: string) {
-    const findTrack =
-      await this.artistModel.aggregate([
-        {
-          $unwind: '$albums',
-        },
-        {
-          $unwind: '$albums.tracks',
-        },
-        {
-          $match: {
-            'albums.tracks._id': {
-              $eq: new mongoose.Types.ObjectId(
-                id,
-              ),
-            },
+    const findTrack = await this.artistModel.aggregate([
+      {
+        $unwind: '$albums',
+      },
+      {
+        $unwind: '$albums.tracks',
+      },
+      {
+        $match: {
+          'albums.tracks._id': {
+            $eq: new mongoose.Types.ObjectId(id),
           },
         },
-        // {
-        //   $project: {
-        //     trackName: '$albums.tracks.trackName',
-        //     tags: '$albums.tracks.tags',
-        //     youtube_link:
-        //       '$albums.tracks.youtube_link',
-        //     length: '$albums.tracks.length',
-        //     fileName: '$albums.tracks.fileName',
-        //     filePath: '$albums.tracks.filePath',
-        //     _id: '$albums.tracks._id',
-        //   },
-        // },
-      ]);
+      },
+      // {
+      //   $project: {
+      //     trackName: '$albums.tracks.trackName',
+      //     tags: '$albums.tracks.tags',
+      //     youtube_link:
+      //       '$albums.tracks.youtube_link',
+      //     length: '$albums.tracks.length',
+      //     fileName: '$albums.tracks.fileName',
+      //     filePath: '$albums.tracks.filePath',
+      //     _id: '$albums.tracks._id',
+      //   },
+      // },
+    ]);
 
     if (!findTrack) throw new NotFoundException();
     return findTrack;
@@ -207,9 +195,7 @@ export class TrackService {
 
   async updateTrack(dto: UpdateTrackDto) {
     // check exist track
-    const findTrack = await this.findTrackById(
-      dto.trackId,
-    );
+    const findTrack = await this.findTrackById(dto.trackId);
     const { _id: albumId } = findTrack[0].albums;
 
     // delete empty data
@@ -233,36 +219,31 @@ export class TrackService {
       youtube_link: dto.youtube_link,
     };
 
-    const updatedTrack =
-      await this.artistModel.updateOne(
-        {
-          'albums.tracks._id': dto.trackId,
+    const updatedTrack = await this.artistModel.updateOne(
+      {
+        'albums.tracks._id': dto.trackId,
+      },
+      {
+        $set: {
+          'albums.$.tracks': data,
         },
-        {
-          $set: {
-            'albums.$.tracks': data,
-          },
-        },
-      );
+      },
+    );
 
     if (updatedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
-    // // send data with event emitter to elasticsearch
-    const { _id, albums } =
-      await this.artistModel.findOne(
-        { 'albums._id': albumId },
-        { 'albums.$': 1 },
-      );
+    // send data with event emitter to elasticsearch
+    const { _id, albums } = await this.artistModel.findOne(
+      { 'albums._id': albumId },
+      { 'albums.$': 1 },
+    );
 
     const elasticData = {
       id: _id,
       albums,
     };
-    this.eventEmitter.emit(
-      'update.artist',
-      elasticData,
-    );
+    this.eventEmitter.emit('update.artist', elasticData);
 
     return {
       msg: 'track info updated successfully',
@@ -270,53 +251,44 @@ export class TrackService {
     };
   }
 
-  async removeTrack(
-    trackName: string,
-    albumName: string,
-  ) {
+  async removeTrack(trackName: string, albumName: string) {
     // check exist track
-    const { fileName } =
-      await this.findTrackByName(
-        trackName,
-        albumName,
-      );
-
-    // delete track file
-    deleteFileInPublic(fileName);
+    const { fileName } = await this.findTrackByName(
+      trackName,
+      albumName,
+    );
 
     // remove track from DB
-    const removedTrack =
-      await this.artistModel.updateOne(
-        {
-          'albums.tracks.trackName': trackName,
-        },
-        {
-          $pull: {
-            'albums.$.tracks': {
-              trackName,
-            },
+    const removedTrack = await this.artistModel.updateOne(
+      {
+        'albums.tracks.trackName': trackName,
+      },
+      {
+        $pull: {
+          'albums.$.tracks': {
+            trackName,
           },
         },
-      );
+      },
+    );
 
     if (removedTrack.modifiedCount == 0)
       throw new InternalServerErrorException();
 
+    // delete track file
+    deleteFileInPublic(fileName);
+
     // send data with event emitter to elasticsearch
-    const { _id, albums } =
-      await this.artistModel.findOne(
-        { 'albums.albumName': albumName },
-        { 'albums.$': 1 },
-      );
+    const { _id, albums } = await this.artistModel.findOne(
+      { 'albums.albumName': albumName },
+      { 'albums.$': 1 },
+    );
 
     const elasticData = {
       id: _id,
       albums,
     };
-    this.eventEmitter.emit(
-      'update.artist',
-      elasticData,
-    );
+    this.eventEmitter.emit('update.artist', elasticData);
 
     return {
       msg: 'track removed successfuly',
@@ -336,17 +308,13 @@ export class TrackService {
     let hour: number = 0;
     if (Number(minutes) > 60) {
       total = Number(minutes) / 60;
-      let [h1, percent] =
-        String(total).split('.');
+      let [h1, percent] = String(total).split('.');
       hour = Number(h1);
-      minutes = Math.round(
-        (Number(percent) * 60) / 100,
-      )
+      minutes = Math.round((Number(percent) * 60) / 100)
         .toString()
         .substring(0, 2);
     }
-    if (String(hour).length == 1)
-      hour = Number(`0${hour}`);
+    if (String(hour).length == 1) hour = Number(`0${hour}`);
     if (String(minutes).length == 1)
       minutes = String(`0${minutes}`);
     if (String(second).length == 1)

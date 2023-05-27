@@ -1,12 +1,9 @@
-import { ConfigService } from '@nestjs/config';
 import {
   Prop,
   Schema,
   SchemaFactory,
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
-const config = new ConfigService();
 @Schema()
 export class Track extends Document {
   @Prop({ required: true })
@@ -37,12 +34,6 @@ export const TrackSchema =
 
 TrackSchema.index({
   trackName: 'text',
-});
-
-TrackSchema.virtual('trackURL').get(function () {
-  return `${config.get(
-    'HOST',
-  )}:${config.get('PORT')}/${this.filePath}`;
 });
 
 @Schema()

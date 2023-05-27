@@ -16,8 +16,7 @@ import { FilmModule } from './film/film.module';
       rootPath: join(
         __dirname,
         '..',
-        'uploads',
-        'musics',
+        'uploads'
       ),
     }),
     MongooseModule.forRootAsync({

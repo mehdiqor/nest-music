@@ -50,6 +50,11 @@ export class DirectorService {
     );
     if (!findDirector) throw new NotFoundException();
 
+    // delete empty data
+    Object.keys(dto).forEach((key) => {
+      if (!dto[key]) delete dto[key];
+    });
+
     // update director
     const updatedDirector =
       await this.directorModel.updateOne(
