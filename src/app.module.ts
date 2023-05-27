@@ -9,6 +9,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { FilmModule } from './film/film.module';
+import { AdminModule } from './admin-panel/admin.module';
+import { ElasticModule } from './elastic/elastic.module';
 
 @Module({
   imports: [
@@ -49,8 +51,10 @@ import { FilmModule } from './film/film.module';
       // disable throwing uncaughtException if an error event is emitted and it has no listeners
       ignoreErrors: false,
     }),
+    AdminModule,
     MusicModule,
     FilmModule,
+    ElasticModule
   ],
 })
 export class AppModule {}

@@ -46,7 +46,11 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Music and Movie')
     .setVersion('1.0')
-    .build();
+    .addTag('Admin')
+    .addTag('Search')
+    .addTag('Film')
+    .addTag('Music')
+    .build()
 
   const document = SwaggerModule.createDocument(
     app,

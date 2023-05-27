@@ -14,7 +14,7 @@ import {
 } from '@nestjs/swagger';
 import { IndexDto } from './dto';
 
-@ApiTags('Elastic Search')
+@ApiTags('Search')
 @Controller('elastic')
 export class ElasticController {
   constructor(

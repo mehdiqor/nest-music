@@ -17,7 +17,7 @@ import {
   UpdateAlbumDto,
 } from './dto';
 
-@ApiTags('Album')
+@ApiTags('Music')
 @Controller('album')
 export class AlbumController {
   constructor(

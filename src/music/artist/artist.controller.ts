@@ -16,7 +16,7 @@ import {
 import { ArtistService } from './artist.service';
 import { AddArtistDto, UpdateArtistDto } from './dto';
 
-@ApiTags('Artist')
+@ApiTags('Music')
 @Controller('artist')
 export class ArtistController {
   constructor(

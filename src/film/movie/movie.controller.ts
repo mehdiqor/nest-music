@@ -13,7 +13,7 @@ import { MovieService } from './movie.service';
 import { AddMovieDto, UpdateMovieDto } from './dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@ApiTags('Movie')
+@ApiTags('Film')
 @Controller('movie')
 export class MovieController {
   constructor(

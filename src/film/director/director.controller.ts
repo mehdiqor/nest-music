@@ -10,7 +10,7 @@ import { DirectorService } from './director.service';
 import { AddDirectorDto, UpdateDirectorDto } from './dto';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('Director')
+@ApiTags('Film')
 @Controller('director')
 export class DirectorController {
   constructor(

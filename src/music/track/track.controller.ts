@@ -13,7 +13,7 @@ import { TrackService } from './track.service';
 import { AddTrackDto, UpdateTrackDto } from './dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@ApiTags('Track')
+@ApiTags('Music')
 @Controller('track')
 export class TrackController {
   constructor(
