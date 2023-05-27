@@ -23,14 +23,13 @@ export class DirectorService {
 
   async addDirector(dto: AddDirectorDto) {
     // check exist director
-    const findDirector = await this.findDirector(
-      dto.name,
-      null,
-    );
-    if (findDirector)
-      throw new ConflictException(
-        'this director is already exist',
-      );
+    try {
+      const exist = await this.findDirector(dto.name, null);
+      if (exist) throw new ConflictException();
+    } catch (e) {
+      if (e.status == 409)
+        return { msg: 'this director is already exist' };
+    }
 
     // add to db
     const director = await this.directorModel.create({
@@ -47,11 +46,7 @@ export class DirectorService {
 
   async updateDirector(dto: UpdateDirectorDto) {
     // check exist director
-    const findDirector = await this.findDirector(
-      null,
-      dto.id,
-    );
-    if (!findDirector) throw new NotFoundException();
+    await this.findDirector(null, dto.id);
 
     // delete empty data
     Object.keys(dto).forEach((key) => {
@@ -83,8 +78,7 @@ export class DirectorService {
 
   async removeDirector(id: string) {
     // check exist director
-    const findDirector = await this.findDirector(null, id);
-    if (!findDirector) throw new NotFoundException();
+    await this.findDirector(null, id);
 
     // delete from db
     const removedDirector =
@@ -108,14 +102,14 @@ export class DirectorService {
         name,
       });
 
-      if (!find) return false;
-      return true;
+      if (!find) throw new NotFoundException();
+      return find;
     }
     if (id) {
       const find = await this.directorModel.findById(id);
 
-      if (!find) return false;
-      return true;
+      if (!find) throw new NotFoundException();
+      return find;
     }
   }
 
@@ -128,7 +122,7 @@ export class DirectorService {
   }
 
   @OnEvent('admin.movies')
-  async getAlbumsOfArtist(
+  async getMoviesOfDirector(
     directorName: string,
     resolve: (albums: any) => void,
   ) {

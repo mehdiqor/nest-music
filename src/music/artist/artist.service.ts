@@ -23,16 +23,16 @@ export class ArtistService {
 
   async addArtist(dto: AddArtistDto) {
     // check exist artist
-    const checkExistArtist = await this.artistModel.findOne(
-      {
-        artistName: dto.artistName,
-      },
-    );
-
-    if (checkExistArtist)
-      throw new ConflictException(
-        'this artist already exist!',
+    try {
+      const exist = await this.findArtist(
+        dto.artistName,
+        null,
       );
+      if (exist) throw new ConflictException();
+    } catch (e) {
+      if (e.status == 409)
+        return { msg: 'this artist is already exist' };
+    }
 
     // create artist and save in DB
     const artist = await this.artistModel.create({
@@ -49,7 +49,7 @@ export class ArtistService {
 
   async updateArtistById(id: string, dto: UpdateArtistDto) {
     // check exist artist
-    await this.getArtistById(id);
+    await this.findArtist(null, id);
 
     // delete empty data
     Object.keys(dto).forEach((key) => {
@@ -82,7 +82,7 @@ export class ArtistService {
 
   async removeArtistByName(artistName: string) {
     // check exist artist
-    const { _id } = await this.findArtist(artistName);
+    const { _id } = await this.findArtist(artistName, null);
 
     // remove artist from DB
     const deletedArtist = await this.artistModel.deleteOne({
@@ -101,22 +101,21 @@ export class ArtistService {
     };
   }
 
-  async getArtistById(id: string) {
-    const artist = await this.artistModel.findById(id);
+  async findArtist(artistName?: string, id?: string) {
+    if (artistName) {
+      const artist = await this.artistModel.findOne({
+        artistName,
+      });
 
-    if (!artist) throw new NotFoundException();
+      if (!artist) throw new NotFoundException();
+      return artist;
+    }
+    if (id) {
+      const artist = await this.artistModel.findById(id);
 
-    return artist;
-  }
-
-  async findArtist(artistName: string) {
-    const artist = await this.artistModel.findOne({
-      artistName,
-    });
-
-    if (!artist) throw new NotFoundException();
-
-    return artist;
+      if (!artist) throw new NotFoundException();
+      return artist;
+    }
   }
 
   // Admin Panel

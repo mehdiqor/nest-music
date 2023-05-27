@@ -26,22 +26,16 @@ export class TrackService {
     dto: AddTrackDto,
     file: Express.Multer.File,
   ) {
-    // check exist track
-    const artist = await this.artistModel.findOne({
-      artistName: dto.artistName,
-    });
-
-    const album = artist.albums.find(
-      (t) => t.albumName == dto.albumName,
-    );
-    const findTrack = album.tracks.find(
-      (t) => t.trackName === dto.trackName,
-    );
-
-    if (findTrack)
-      throw new ConflictException(
-        'this track is already exist',
+    try {
+      const find = await this.findTrackByName(
+        dto.trackName,
+        dto.albumName,
       );
+      if (find) throw new ConflictException();
+    } catch (e) {
+      if (e.status == 409)
+        return { msg: 'this track is already exist' };
+    }
 
     // save tags in array
     let tag: any;
@@ -102,96 +96,6 @@ export class TrackService {
       added: track.modifiedCount,
     };
   }
-
-  async findTrackByName(
-    trackName: string,
-    albumName: string,
-  ) {
-    const artist = await this.artistModel.findOne({
-      'albums.tracks.trackName': trackName,
-    });
-
-    const album = artist.albums.find(
-      (t) => t.albumName == albumName,
-    );
-    const track = album.tracks.find(
-      (t) => t.trackName === trackName,
-    );
-
-    if (!track) throw new NotFoundException();
-
-    return track;
-  }
-
-  async findTrackById(id: string) {
-    const findTrack = await this.artistModel.aggregate([
-      {
-        $unwind: '$albums',
-      },
-      {
-        $unwind: '$albums.tracks',
-      },
-      {
-        $match: {
-          'albums.tracks._id': {
-            $eq: new mongoose.Types.ObjectId(id),
-          },
-        },
-      },
-      // {
-      //   $project: {
-      //     trackName: '$albums.tracks.trackName',
-      //     tags: '$albums.tracks.tags',
-      //     youtube_link:
-      //       '$albums.tracks.youtube_link',
-      //     length: '$albums.tracks.length',
-      //     fileName: '$albums.tracks.fileName',
-      //     filePath: '$albums.tracks.filePath',
-      //     _id: '$albums.tracks._id',
-      //   },
-      // },
-    ]);
-
-    if (!findTrack) throw new NotFoundException();
-    return findTrack;
-  }
-
-  // async findAggregate(id: string) {
-  //   const findTrack =
-  //     await this.artistModel.aggregate([
-  //       {
-  //         $addFields: {
-  //           trackDetail: {
-  //             $map: {
-  //               input: '$albums',
-  //               as: 'album',
-  //               in: {
-  //                 $arrayElemAt: [
-  //                   {
-  //                     $filter: {
-  //                       input: '$tracks',
-  //                       as: 'track',
-  //                       cond: {
-  //                         $eq: [
-  //                           '$$track._id',
-  //                           id,
-  //                         ],
-  //                       },
-  //                     },
-  //                   },
-  //                   0,
-  //                 ],
-  //               },
-  //             },
-  //           },
-  //         },
-  //       },
-  //     ]);
-
-  //   if (!findTrack) throw new NotFoundException();
-
-  //   return findTrack[0];
-  // }
 
   async updateTrack(dto: UpdateTrackDto) {
     // check exist track
@@ -295,6 +199,96 @@ export class TrackService {
       removed: removedTrack.modifiedCount,
     };
   }
+
+  async findTrackById(id: string) {
+    const findTrack = await this.artistModel.aggregate([
+      {
+        $unwind: '$albums',
+      },
+      {
+        $unwind: '$albums.tracks',
+      },
+      {
+        $match: {
+          'albums.tracks._id': {
+            $eq: new mongoose.Types.ObjectId(id),
+          },
+        },
+      },
+      // {
+      //   $project: {
+      //     trackName: '$albums.tracks.trackName',
+      //     tags: '$albums.tracks.tags',
+      //     youtube_link:
+      //       '$albums.tracks.youtube_link',
+      //     length: '$albums.tracks.length',
+      //     fileName: '$albums.tracks.fileName',
+      //     filePath: '$albums.tracks.filePath',
+      //     _id: '$albums.tracks._id',
+      //   },
+      // },
+    ]);
+
+    if (!findTrack) throw new NotFoundException();
+    return findTrack;
+  }
+
+  async findTrackByName(
+    trackName: string,
+    albumName: string,
+  ) {
+    const artist = await this.artistModel.findOne({
+      'albums.tracks.trackName': trackName,
+    });
+
+    const album = artist.albums.find(
+      (t) => t.albumName == albumName,
+    );
+    const track = album.tracks.find(
+      (t) => t.trackName === trackName,
+    );
+
+    if (!track) throw new NotFoundException();
+
+    return track;
+  }
+
+  // async findAggregate(id: string) {
+  //   const findTrack =
+  //     await this.artistModel.aggregate([
+  //       {
+  //         $addFields: {
+  //           trackDetail: {
+  //             $map: {
+  //               input: '$albums',
+  //               as: 'album',
+  //               in: {
+  //                 $arrayElemAt: [
+  //                   {
+  //                     $filter: {
+  //                       input: '$tracks',
+  //                       as: 'track',
+  //                       cond: {
+  //                         $eq: [
+  //                           '$$track._id',
+  //                           id,
+  //                         ],
+  //                       },
+  //                     },
+  //                   },
+  //                   0,
+  //                 ],
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     ]);
+
+  //   if (!findTrack) throw new NotFoundException();
+
+  //   return findTrack[0];
+  // }
 
   getTime(seconds: number): string {
     let total: number = Math.round(seconds) / 60;

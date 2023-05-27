@@ -1,13 +1,6 @@
-import {
-  Controller,
-  Get,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ElasticService } from './elastic.service';
-import {
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Search')
 @Controller('elastic')
@@ -16,12 +9,7 @@ export class ElasticController {
     private readonly elasticService: ElasticService,
   ) {}
 
-  @Get('find')
-  @ApiQuery({
-    name: 'index',
-    type: String,
-    required: true,
-  })
+  @Get('word-search')
   @ApiQuery({
     name: 'search',
     type: String,
@@ -34,7 +22,7 @@ export class ElasticController {
     return this.elasticService.findWIthWord(index, search);
   }
 
-  @Get('regexp')
+  @Get('regexp-search')
   // @Render('search-engine/search')
   @ApiQuery({
     name: 'search',

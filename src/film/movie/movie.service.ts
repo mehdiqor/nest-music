@@ -25,8 +25,8 @@ export class MovieService {
     dto: AddMovieDto,
     file: Express.Multer.File,
   ) {
+    // check exist movie
     try {
-      // check exist movie
       const exist = await this.findMovie(dto.title, null);
       if (exist) throw new ConflictException();
     } catch (e) {
@@ -172,16 +172,6 @@ export class MovieService {
       msg: 'movie removed successfully',
       removed: removedMovie.modifiedCount,
     };
-  }
-
-  async getMoviesOfDirector(name: string) {
-    const movies = await this.directorModel.findOne(
-      { name },
-      { movies: 1 },
-    );
-
-    if (!movies) throw new NotFoundException();
-    return movies;
   }
 
   async findMovie(title?: string, id?: string) {
