@@ -14,10 +14,7 @@ import {
   ApiProperty,
 } from '@nestjs/swagger';
 import { ArtistService } from './artist.service';
-import {
-  AddArtistDto,
-  UpdateArtistDto,
-} from './dto';
+import { AddArtistDto, UpdateArtistDto } from './dto';
 
 @ApiTags('Artist')
 @Controller('artist')
@@ -28,15 +25,11 @@ export class ArtistController {
 
   @Get('sync')
   syncElasticWithMongo(@Query('id') id: string) {
-    return this.artistService.syncElasticWithMongo(
-      id,
-    );
+    return this.artistService.syncElasticWithMongo(id);
   }
 
   @Post('add')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   addArtist(@Body() dto: AddArtistDto) {
     return this.artistService.addArtist(dto);
   }
@@ -53,17 +46,12 @@ export class ArtistController {
   }
 
   @Patch('update/:id')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   updateArtistById(
     @Param('id') id: string,
     @Body() dto: UpdateArtistDto,
   ) {
-    return this.artistService.updateArtistById(
-      id,
-      dto,
-    );
+    return this.artistService.updateArtistById(id, dto);
   }
 
   @Delete('remove/:artistName')

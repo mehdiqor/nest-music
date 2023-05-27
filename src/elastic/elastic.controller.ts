@@ -23,14 +23,20 @@ export class ElasticController {
 
   @Get('find')
   @ApiQuery({
+    name: 'index',
+    type: String,
+    required: true,
+  })
+  @ApiQuery({
     name: 'search',
     type: String,
     required: false,
   })
-  findWIthWord(@Query('search') search: string) {
-    return this.elasticService.findWIthWord(
-      search,
-    );
+  findWIthWord(
+    @Query('index') index: string,
+    @Query('search') search: string,
+  ) {
+    return this.elasticService.findWIthWord(index, search);
   }
 
   @Get('regexp')
@@ -40,45 +46,31 @@ export class ElasticController {
     type: String,
     required: false,
   })
-  searchWithRegexp(
-    @Query('search') search: string,
-  ) {
-    return this.elasticService.searchWithRegexp(
-      search,
-    );
+  searchWithRegexp(@Query('search') search: string) {
+    return this.elasticService.searchWithRegexp(search);
   }
 
   @Delete('remove')
-  removeDirectlyFromElastic(
-    @Query('id') id: string,
-  ) {
+  removeDirectlyFromElastic(@Query('id') id: string) {
     return this.elasticService.removeDirectlyFromElastic(
       id,
     );
   }
 
   @Post('add-index')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   createIndex(@Body() dto: IndexDto) {
     return this.elasticService.createIndex(dto);
   }
 
   @Post('exist-index')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   checkExistIndex(@Body() dto: IndexDto) {
-    return this.elasticService.checkExistIndex(
-      dto,
-    );
+    return this.elasticService.checkExistIndex(dto);
   }
 
   @Delete('remove-index')
-  @ApiConsumes(
-    'application/x-www-form-urlencoded',
-  )
+  @ApiConsumes('application/x-www-form-urlencoded')
   removeIndex(@Body() dto: IndexDto) {
     return this.elasticService.removeIndex(dto);
   }

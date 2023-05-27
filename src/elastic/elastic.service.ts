@@ -16,9 +16,9 @@ export class ElasticService {
   ) {}
 
   // Search
-  async findWIthWord(search: string) {
+  async findWIthWord(index: string, search: string) {
     const body = await this.esClient.search({
-      index: 'musics',
+      index,
       q: search,
     });
 
@@ -72,44 +72,6 @@ export class ElasticService {
       console.log('not deleted from elastic');
   }
 
-  // Index Crud
-  async createIndex(dto: IndexDto) {
-    // check exist index
-    const exist = await this.checkExistIndex(dto);
-    if (exist) throw new ConflictException();
-
-    // add index
-    const index =
-      await this.esClient.indices.create({
-        index: dto.indexName,
-      });
-    console.log(index);
-
-    return index;
-  }
-
-  async checkExistIndex(dto: IndexDto) {
-    const index =
-      await this.esClient.indices.exists({
-        index: dto.indexName,
-      });
-
-    return index;
-  }
-
-  async removeIndex(dto: IndexDto) {
-    const index =
-      await this.esClient.indices.delete({
-        index: dto.indexName,
-      });
-
-    if (index.acknowledged == false)
-      throw new InternalServerErrorException();
-
-    return { msg: 'Index removed' };
-  }
-
-  // Event Emitter
   @OnEvent('sync.artist')
   async syncArtist(data) {
     const elastic = await this.esClient.index({
@@ -127,6 +89,41 @@ export class ElasticService {
       );
   }
 
+  // Index CRUD
+  async createIndex(dto: IndexDto) {
+    // check exist index
+    const exist = await this.checkExistIndex(dto);
+    if (exist) throw new ConflictException();
+
+    // add index
+    const index = await this.esClient.indices.create({
+      index: dto.indexName,
+    });
+    console.log(index);
+
+    return index;
+  }
+
+  async checkExistIndex(dto: IndexDto) {
+    const index = await this.esClient.indices.exists({
+      index: dto.indexName,
+    });
+
+    return index;
+  }
+
+  async removeIndex(dto: IndexDto) {
+    const index = await this.esClient.indices.delete({
+      index: dto.indexName,
+    });
+
+    if (index.acknowledged == false)
+      throw new InternalServerErrorException();
+
+    return { msg: 'Index removed' };
+  }
+
+  // Artist Event Emitter
   @OnEvent('add.artist')
   async addArtist(data) {
     const elastic = await this.esClient.index({
@@ -136,19 +133,6 @@ export class ElasticService {
         artistName: data.artistName,
         albums: data.albums,
       },
-    });
-
-    if (elastic._shards.successful == 0)
-      throw new InternalServerErrorException(
-        'elastic error',
-      );
-  }
-
-  @OnEvent('remove.artist')
-  async removeArtist(id: string) {
-    const elastic = await this.esClient.delete({
-      index: 'musics',
-      id,
     });
 
     if (elastic._shards.successful == 0)
@@ -175,14 +159,94 @@ export class ElasticService {
       );
   }
 
-  @OnEvent('update.model')
-  async updateModel(data) {
+  @OnEvent('remove.artist')
+  async removeArtist(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'musics',
+      id,
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('update.artist')
+  async updateArtist(data) {
     const elastic = await this.esClient.update({
       index: 'musics',
       id: data.id,
       body: {
         doc: {
           albums: data.albums,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  // Director Event Emitter
+  @OnEvent('add.director')
+  async addDirector(data) {
+    const elastic = await this.esClient.index({
+      index: 'film',
+      id: data._id,
+      body: {
+        name: data.name,
+        movies: data.movies,
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('edit.director')
+  async editDirector(data) {
+    const elastic = await this.esClient.update({
+      index: 'film',
+      id: data.id,
+      body: {
+        doc: {
+          name: data.name,
+        },
+      },
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('remove.director')
+  async removeDirector(id: string) {
+    const elastic = await this.esClient.delete({
+      index: 'film',
+      id,
+    });
+
+    if (elastic._shards.successful == 0)
+      throw new InternalServerErrorException(
+        'elastic error',
+      );
+  }
+
+  @OnEvent('update.director')
+  async updateDirector(data) {
+    const elastic = await this.esClient.update({
+      index: 'film',
+      id: data.id,
+      body: {
+        doc: {
+          movies: data.movies,
         },
       },
     });

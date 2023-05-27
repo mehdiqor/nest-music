@@ -7,10 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Artist } from 'src/schemas/music.schema';
-import {
-  AddArtistDto,
-  UpdateArtistDto,
-} from './dto';
+import { AddArtistDto, UpdateArtistDto } from './dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
@@ -23,8 +20,7 @@ export class ArtistService {
 
   // Move to Admin Panel
   async syncElasticWithMongo(id: string) {
-    const artist =
-      await this.artistModel.findById(id);
+    const artist = await this.artistModel.findById(id);
 
     // send data with event emitter to elasticsearch
     const data = {
@@ -39,10 +35,11 @@ export class ArtistService {
 
   async addArtist(dto: AddArtistDto) {
     // check exist artist
-    const checkExistArtist =
-      await this.artistModel.findOne({
+    const checkExistArtist = await this.artistModel.findOne(
+      {
         artistName: dto.artistName,
-      });
+      },
+    );
 
     if (checkExistArtist)
       throw new ConflictException(
@@ -54,8 +51,7 @@ export class ArtistService {
       artistName: dto.artistName,
     });
 
-    if (!artist)
-      throw new InternalServerErrorException();
+    if (!artist) throw new InternalServerErrorException();
 
     // send data with event emitter to elasticsearch
     this.eventEmitter.emit('add.artist', artist);
@@ -64,25 +60,20 @@ export class ArtistService {
   }
 
   async getAllArtists() {
-    const allArtists =
-      await this.artistModel.find();
+    const allArtists = await this.artistModel.find();
 
     return allArtists;
   }
 
   async getArtistById(id: string) {
-    const artist =
-      await this.artistModel.findById(id);
+    const artist = await this.artistModel.findById(id);
 
     if (!artist) throw new NotFoundException();
 
     return artist;
   }
 
-  async updateArtistById(
-    id: string,
-    dto: UpdateArtistDto,
-  ) {
+  async updateArtistById(id: string, dto: UpdateArtistDto) {
     // check exist artist
     await this.getArtistById(id);
 
@@ -92,13 +83,12 @@ export class ArtistService {
     });
 
     // update artist info
-    const updatedArtist =
-      await this.artistModel.updateOne(
-        { _id: id },
-        {
-          artistName: dto.artistName,
-        },
-      );
+    const updatedArtist = await this.artistModel.updateOne(
+      { _id: id },
+      {
+        artistName: dto.artistName,
+      },
+    );
 
     if (updatedArtist.modifiedCount == 0)
       throw new InternalServerErrorException();
@@ -118,15 +108,12 @@ export class ArtistService {
 
   async removeArtistByName(artistName: string) {
     // check exist artist
-    const { _id } = await this.findArtist(
-      artistName,
-    );
+    const { _id } = await this.findArtist(artistName);
 
     // remove artist from DB
-    const deletedArtist =
-      await this.artistModel.deleteOne({
-        artistName,
-      });
+    const deletedArtist = await this.artistModel.deleteOne({
+      artistName,
+    });
 
     if (deletedArtist.deletedCount == 0)
       throw new InternalServerErrorException();
@@ -141,9 +128,9 @@ export class ArtistService {
   }
 
   async findArtist(artistName: string) {
-    const artist = await this.artistModel.findOne(
-      { artistName },
-    );
+    const artist = await this.artistModel.findOne({
+      artistName,
+    });
 
     if (!artist) throw new NotFoundException();
 

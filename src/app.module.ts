@@ -8,6 +8,7 @@ import { MusicModule } from './music/music.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { FilmModule } from './film/film.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       ignoreErrors: false,
     }),
     MusicModule,
+    FilmModule,
   ],
 })
 export class AppModule {}

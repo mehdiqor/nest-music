@@ -100,7 +100,7 @@ export class TrackService {
       albums,
     };
     this.eventEmitter.emit(
-      'update.model',
+      'update.artist',
       elasticData,
     );
 
@@ -260,7 +260,7 @@ export class TrackService {
       albums,
     };
     this.eventEmitter.emit(
-      'update.model',
+      'update.artist',
       elasticData,
     );
 
@@ -314,7 +314,7 @@ export class TrackService {
       albums,
     };
     this.eventEmitter.emit(
-      'update.model',
+      'update.artist',
       elasticData,
     );
 

@@ -65,7 +65,7 @@ export class AlbumService {
       id: dto.artistId,
       albums,
     };
-    this.eventEmitter.emit('update.model', data);
+    this.eventEmitter.emit('update.artist', data);
 
     return albums;
   }
@@ -128,7 +128,7 @@ export class AlbumService {
       id: artistId,
       albums,
     };
-    this.eventEmitter.emit('update.model', data);
+    this.eventEmitter.emit('update.artist', data);
 
     return {
       msg: 'album info updated successfully',
@@ -167,7 +167,7 @@ export class AlbumService {
       id: artistId,
       albums,
     };
-    this.eventEmitter.emit('update.model', data);
+    this.eventEmitter.emit('update.artist', data);
 
     return {
       msg: 'album removed successfuly',
