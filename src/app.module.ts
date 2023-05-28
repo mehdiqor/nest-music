@@ -19,14 +19,15 @@ import {
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { SpotifyModule } from './spotify/spotify.module';
 
 @Module({
   imports: [
-    CacheModule.register({
-      isGlobal: true,
-      store: redisStore,
-      url: process.env.REDIS_HOST,
-    }),
+    // CacheModule.register({
+    //   isGlobal: true,
+    //   store: redisStore,
+    //   url: process.env.REDIS_HOST,
+    // }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
@@ -66,12 +67,13 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     MusicModule,
     FilmModule,
     ElasticModule,
+    SpotifyModule,
   ],
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
-  ],
+  // providers: [
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
+  // ],
 })
 export class AppModule {}
