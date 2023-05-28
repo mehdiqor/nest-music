@@ -6,6 +6,7 @@ import {
   Director,
   DirectorSchema,
 } from 'src/schemas/movie.schema';
+import { DirectorResolver } from './dirctor.resolver';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import {
     ]),
   ],
   controllers: [DirectorController],
-  providers: [DirectorService],
+  providers: [DirectorService, DirectorResolver],
 })
 export class DirectorModule {}

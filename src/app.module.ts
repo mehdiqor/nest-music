@@ -11,9 +11,15 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { FilmModule } from './film/film.module';
 import { AdminModule } from './admin-panel/admin.module';
 import { ElasticModule } from './elastic/elastic.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 @Module({
   imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: true,
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(
         __dirname,
@@ -54,7 +60,7 @@ import { ElasticModule } from './elastic/elastic.module';
     AdminModule,
     MusicModule,
     FilmModule,
-    ElasticModule
+    ElasticModule,
   ],
 })
 export class AppModule {}

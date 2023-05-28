@@ -1,14 +1,18 @@
+import { Field, ObjectType } from '@nestjs/graphql';
 import {
   Prop,
   Schema,
   SchemaFactory,
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+@ObjectType()
 @Schema()
 export class Track extends Document {
+  @Field(() => String)
   @Prop({ required: true })
   trackName: string;
 
+  @Field(() => [String])
   @Prop({
     type: [String],
     default: [],
@@ -16,15 +20,19 @@ export class Track extends Document {
   })
   tags: string[];
 
+  @Field(() => String)
   @Prop({ required: false })
   youtube_link: string;
 
+  @Field(() => String)
   @Prop()
   length: string;
 
+  @Field(() => String)
   @Prop()
   fileName: string;
 
+  @Field(() => String)
   @Prop()
   filePath: string;
 }
@@ -36,17 +44,22 @@ TrackSchema.index({
   trackName: 'text',
 });
 
+@ObjectType()
 @Schema()
 export class Album extends Document {
+  @Field(() => String)
   @Prop({ required: true })
   albumName: string;
 
+  @Field(() => String)
   @Prop({ required: false })
   year: string;
 
+  @Field(() => String)
   @Prop({ required: true })
   genre: MusicGenre;
 
+  @Field(() => [Track])
   @Prop({ type: [TrackSchema], default: [] })
   tracks: [Track];
 }
@@ -70,11 +83,14 @@ AlbumSchema.index({
   albumName: 'text',
 });
 
+@ObjectType()
 @Schema()
 export class Artist extends Document {
+  @Field(() => String)
   @Prop({ required: true })
   artistName: string;
 
+  @Field(() => [Album])
   @Prop({ type: [AlbumSchema], default: [] })
   albums: [Album];
 }

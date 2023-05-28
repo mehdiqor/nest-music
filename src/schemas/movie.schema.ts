@@ -1,3 +1,4 @@
+import { Field, ObjectType } from '@nestjs/graphql';
 import {
   Prop,
   Schema,
@@ -5,23 +6,30 @@ import {
 } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+@ObjectType()
 @Schema()
 export class Movie extends Document {
+  @Field(() => String)
   @Prop({ required: true })
   title: string;
 
+  @Field(() => String)
   @Prop({ required: false })
   year: string;
 
+  @Field(() => String)
   @Prop({ required: true })
   genre: MovieGenre;
 
+  @Field(() => String)
   @Prop({ required: false })
   link: string;
 
+  @Field(() => String)
   @Prop()
   imageName: string;
 
+  @Field(() => String)
   @Prop()
   imagePath: string;
 }
@@ -45,11 +53,14 @@ MovieSchema.index({
   year: 'text',
 });
 
+@ObjectType()
 @Schema()
 export class Director extends Document {
+  @Field(() => String)
   @Prop({ required: true })
   name: string;
 
+  @Field(() => [Movie])
   @Prop({ type: [MovieSchema], default: [] })
   movies: [Movie];
 }

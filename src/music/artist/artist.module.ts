@@ -6,6 +6,7 @@ import {
   Artist,
   ArtistSchema,
 } from 'src/schemas/music.schema';
+import { ArtistResolver } from './artist.resolver';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import {
     ]),
   ],
   controllers: [ArtistController],
-  providers: [ArtistService],
+  providers: [ArtistService, ArtistResolver],
 })
 export class ArtistModule {}
