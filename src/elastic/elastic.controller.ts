@@ -1,7 +1,9 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { CacheTTL, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 import { ElasticService } from './elastic.service';
 import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CacheInterceptor, CacheKey } from '@nestjs/cache-manager';
 
+@UseInterceptors(CacheInterceptor)
 @ApiTags('Search')
 @Controller('elastic')
 export class ElasticController {
@@ -9,6 +11,8 @@ export class ElasticController {
     private readonly elasticService: ElasticService,
   ) {}
 
+  @CacheKey('findWord')
+  @CacheTTL(60000)
   @Get('word-search')
   @ApiQuery({
     name: 'search',
@@ -22,11 +26,15 @@ export class ElasticController {
     return this.elasticService.findWIthWord(index, search);
   }
 
+  @CacheKey('findMovie')
+  @CacheTTL(60000)
   @Get('find-movie')
   findMovie(@Query('search') search: string) {
     return this.elasticService.findMovie(search);
   }
 
+  @CacheKey('regexp')
+  @CacheTTL(60000)
   @Get('regexp-search')
   // @Render('search-engine/search')
   @ApiQuery({
