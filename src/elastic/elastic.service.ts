@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
@@ -16,12 +17,33 @@ export class ElasticService {
 
   // Search
   async findWIthWord(index: string, search: string) {
+    // check exist index
+    const exist = await this.checkExistIndex(index);
+    if (!exist)
+      throw new NotFoundException('index notfound');
+
     const body = await this.esClient.search({
       index,
       q: search,
     });
 
     const result = body.hits.hits;
+    return result;
+  }
+
+  async findMovie(search: string) {
+    const body = await this.esClient.search({
+      index: 'film',
+      body: {
+        query: {
+          query_string: {
+            query: `movies.title:"${search}"`
+          }
+        }
+      }
+    });
+
+    const result = body.hits.hits[0];
     return result;
   }
 

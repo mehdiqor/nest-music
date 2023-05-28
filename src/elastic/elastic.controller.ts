@@ -22,6 +22,11 @@ export class ElasticController {
     return this.elasticService.findWIthWord(index, search);
   }
 
+  @Get('find-movie')
+  findMovie(@Query('search') search: string) {
+    return this.elasticService.findMovie(search);
+  }
+
   @Get('regexp-search')
   // @Render('search-engine/search')
   @ApiQuery({
